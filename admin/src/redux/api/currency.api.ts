@@ -1,0 +1,76 @@
+// admin/src/redux/api/currency.api.ts
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { MessageResponse } from "../../types/api-types";
+
+export interface Currency {
+    _id: string;
+    symbol: string;
+    isDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CurrencyResponse {
+    success: boolean;
+    currencies: Currency[];
+}
+
+export interface DefaultCurrencyResponse {
+    success: boolean;
+    currency: Currency | null;
+}
+
+export interface CreateCurrencyRequest {
+    symbol: string;
+}
+
+export const currencyApi = createApi({
+    reducerPath: 'currencyAPI',
+    baseQuery: fetchBaseQuery({
+        baseUrl: import.meta.env.VITE_SERVER_URL 
+            ? `${import.meta.env.VITE_SERVER_URL}/api/v1/currencies`
+            : `/api/v1/currencies`,
+        credentials: 'include',
+    }),
+    tagTypes: ['Currency'],
+    endpoints: (builder) => ({
+        getAllCurrencies: builder.query<CurrencyResponse, void>({
+            query: () => '/',
+            providesTags: ['Currency']
+        }),
+        getDefaultCurrency: builder.query<DefaultCurrencyResponse, void>({
+            query: () => '/default',
+            providesTags: ['Currency']
+        }),
+        createCurrency: builder.mutation<MessageResponse, CreateCurrencyRequest>({
+            query: (data) => ({
+                url: '/new',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['Currency'],
+        }),
+        setDefaultCurrency: builder.mutation<MessageResponse, string>({
+            query: (currencyId) => ({
+                url: `/default/${currencyId}`,
+                method: 'PATCH',
+            }),
+            invalidatesTags: ['Currency'],
+        }),
+        deleteCurrency: builder.mutation<MessageResponse, string>({
+            query: (currencyId) => ({
+                url: `/${currencyId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Currency'],
+        }),
+    }),
+});
+
+export const {
+    useGetAllCurrenciesQuery,
+    useGetDefaultCurrencyQuery,
+    useCreateCurrencyMutation,
+    useSetDefaultCurrencyMutation,
+    useDeleteCurrencyMutation
+} = currencyApi;
