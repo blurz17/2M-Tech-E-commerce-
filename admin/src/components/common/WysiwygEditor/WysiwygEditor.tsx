@@ -25,8 +25,6 @@ interface WysiwygEditorProps {
   className?: string;
   disabled?: boolean;
   onImageUpload?: (file: File) => Promise<string>;
-  enablePdfExport?: boolean;
-  pdfFileName?: string;
 }
 
 const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
@@ -36,9 +34,7 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
   height = 300,
   className = "",
   disabled = false,
-  onImageUpload,
-  enablePdfExport = false,
-  pdfFileName = "document"
+  onImageUpload
 }) => {
   const quillRef = useRef<ReactQuill>(null);
 
@@ -178,99 +174,6 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     };
   };
 
-  // PDF export handler
-  const exportToPdf = async () => {
-    try {
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas')).default;
-
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = value;
-      tempDiv.style.cssText = `
-        width: 210mm;
-        padding: 20mm;
-        font-family: Arial, sans-serif;
-        font-size: 12pt;
-        line-height: 1.6;
-        color: #333;
-        background: white;
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-      `;
-      
-      const styleSheet = document.createElement('style');
-      styleSheet.textContent = `
-        h1, h2, h3 { margin-top: 20px; margin-bottom: 10px; }
-        p { margin-bottom: 10px; }
-        ul, ol { margin: 10px 0; padding-left: 30px; }
-        blockquote { 
-          border-left: 4px solid #ddd; 
-          padding-left: 16px; 
-          margin: 16px 0; 
-          font-style: italic; 
-        }
-        img { max-width: 100%; height: auto; }
-        code { 
-          background: #f5f5f5; 
-          padding: 2px 4px; 
-          border-radius: 3px; 
-          font-family: monospace; 
-        }
-        pre { 
-          background: #f5f5f5; 
-          padding: 12px; 
-          border-radius: 4px; 
-          overflow-x: auto; 
-        }
-        
-        /* Include font styles in PDF */
-        .ql-font-arial, .ql-font-arial * { font-family: Arial, sans-serif !important; }
-        .ql-font-comic-sans, .ql-font-comic-sans * { font-family: 'Comic Sans MS', cursive !important; }
-        .ql-font-courier-new, .ql-font-courier-new * { font-family: 'Courier New', monospace !important; }
-        .ql-font-georgia, .ql-font-georgia * { font-family: Georgia, serif !important; }
-        .ql-font-helvetica, .ql-font-helvetica * { font-family: Helvetica, Arial, sans-serif !important; }
-        .ql-font-lucida, .ql-font-lucida * { font-family: 'Lucida Sans Unicode', sans-serif !important; }
-        .ql-font-times-new-roman, .ql-font-times-new-roman * { font-family: 'Times New Roman', serif !important; }
-        .ql-font-trebuchet-ms, .ql-font-trebuchet-ms * { font-family: 'Trebuchet MS', sans-serif !important; }
-        .ql-font-verdana, .ql-font-verdana * { font-family: Verdana, Geneva, sans-serif !important; }
-      `;
-      tempDiv.appendChild(styleSheet);
-      document.body.appendChild(tempDiv);
-
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-
-      document.body.removeChild(tempDiv);
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`${pdfFileName}.pdf`);
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      alert('PDF export failed. Please make sure you have an internet connection and try again.');
-    }
-  };
-
   // Enhanced toolbar configuration
   const modules = useMemo(() => ({
     toolbar: {
@@ -291,18 +194,16 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
         [{ 'direction': 'rtl' }],
         ['blockquote', 'code-block'],
         ['link', ...(onImageUpload ? ['image'] : []), 'video'],
-        ['clean'],
-        ...(enablePdfExport ? [['pdf-export']] : [])
+        ['clean']
       ],
       handlers: {
-        ...(onImageUpload ? { image: imageHandler } : {}),
-        ...(enablePdfExport ? { 'pdf-export': exportToPdf } : {})
+        ...(onImageUpload ? { image: imageHandler } : {})
       }
     },
     clipboard: {
       matchVisual: false,
     }
-  }), [onImageUpload, enablePdfExport, pdfFileName, value]);
+  }), [onImageUpload]);
 
   const formats = [
     'font', 'size',
@@ -318,37 +219,8 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
     ...(onImageUpload ? ['image'] : [])
   ];
 
-  // PDF export button style
-  const pdfButtonStyle = enablePdfExport ? `
-    .ql-toolbar .ql-pdf-export:after {
-      content: "📄";
-      font-size: 16px;
-    }
-    .ql-toolbar .ql-pdf-export {
-      width: 36px !important;
-      height: 36px !important;
-    }
-  ` : '';
-
   return (
     <div className={`wysiwyg-editor-container ${className}`}>
-      <style>
-        {pdfButtonStyle}
-      </style>
-      
-      {enablePdfExport && (
-        <div className="flex justify-end mb-2">
-          <button
-            type="button"
-            onClick={exportToPdf}
-            disabled={!value || disabled}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-1"
-          >
-            📄 Export PDF
-          </button>
-        </div>
-      )}
-
       <ReactQuill
         ref={quillRef}
         theme="snow"
@@ -368,12 +240,6 @@ const WysiwygEditor: React.FC<WysiwygEditorProps> = ({
       {!onImageUpload && (
         <p className="text-xs text-orange-600 mt-2">
           💡 Tip: Use the main image upload section above for product images. Text formatting only available here.
-        </p>
-      )}
-      
-      {enablePdfExport && (
-        <p className="text-xs text-blue-600 mt-2">
-          📄 PDF export available - Click the Export PDF button to download your content as a PDF file.
         </p>
       )}
     </div>

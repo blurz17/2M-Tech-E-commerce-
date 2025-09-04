@@ -12,9 +12,19 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
 
+  // Helper function to create consistent slugs
+  const createSlug = (text: string): string => {
+    return text.toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
   // Navigate to category page
   const handleCategoryClick = (category: Category) => {
-    const slug = category.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = createSlug(category.name);
     navigate(`/category/${slug}`);
   };
 
@@ -42,8 +52,8 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container && categoriesWithImages.length > 0) {
-      // Calculate item width (including gap)
-      const itemWidth = 240; // Approximate width of each item including gap
+      const isMobile = window.innerWidth < 768;
+      const itemWidth = isMobile ? 140 : 240;
       const middlePosition = categoriesWithImages.length * itemWidth;
       container.scrollLeft = middlePosition;
     }
@@ -57,20 +67,18 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
     const handleScroll = () => {
       if (isScrolling) return;
 
-      const itemWidth = 240; // Approximate width of each item including gap
+      const isMobile = window.innerWidth < 768;
+      const itemWidth = isMobile ? 140 : 240;
       const sectionWidth = categoriesWithImages.length * itemWidth;
       const scrollLeft = container.scrollLeft;
       const scrollWidth = container.scrollWidth;
       const clientWidth = container.clientWidth;
 
-      // If scrolled to the beginning (first section), jump to middle section
       if (scrollLeft <= 0) {
         setIsScrolling(true);
         container.scrollLeft = sectionWidth;
         setTimeout(() => setIsScrolling(false), 50);
-      }
-      // If scrolled to the end (third section), jump to middle section
-      else if (scrollLeft >= scrollWidth - clientWidth - 10) {
+      } else if (scrollLeft >= scrollWidth - clientWidth - 10) {
         setIsScrolling(true);
         container.scrollLeft = sectionWidth;
         setTimeout(() => setIsScrolling(false), 50);
@@ -84,14 +92,18 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
   const scrollLeft = () => {
     const container = scrollContainerRef.current;
     if (container) {
-      container.scrollBy({ left: -400, behavior: 'smooth' });
+      const isMobile = window.innerWidth < 768;
+      const scrollDistance = isMobile ? 200 : 400;
+      container.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     const container = scrollContainerRef.current;
     if (container) {
-      container.scrollBy({ left: 400, behavior: 'smooth' });
+      const isMobile = window.innerWidth < 768;
+      const scrollDistance = isMobile ? 200 : 400;
+      container.scrollBy({ left: scrollDistance, behavior: 'smooth' });
     }
   };
 
@@ -100,28 +112,27 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
       {/* Navigation Arrows */}
       <button
         onClick={scrollLeft}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl rounded-full p-4 hover:bg-gray-50 transition-all duration-200 border border-gray-300 hover:scale-110"
+        className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl rounded-full p-2 md:p-4 hover:bg-gray-50 transition-all duration-200 border border-gray-300 hover:scale-110"
       >
-        <ChevronLeft className="w-7 h-7 text-gray-700" />
+        <ChevronLeft className="w-4 h-4 md:w-7 md:h-7 text-gray-700" />
       </button>
       
       <button
         onClick={scrollRight}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl rounded-full p-4 hover:bg-gray-50 transition-all duration-200 border border-gray-300 hover:scale-110"
+        className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl rounded-full p-2 md:p-4 hover:bg-gray-50 transition-all duration-200 border border-gray-300 hover:scale-110"
       >
-        <ChevronRight className="w-7 h-7 text-gray-700" />
+        <ChevronRight className="w-4 h-4 md:w-7 md:h-7 text-gray-700" />
       </button>
 
       <div className="max-w-7.5xl mx-auto">
-        {/* Categories Scroll Container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide py-6"
+          className="flex gap-3 md:gap-6 overflow-x-auto scrollbar-hide py-4 md:py-6"
           style={{ 
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none',
-            paddingLeft: '2rem',
-            paddingRight: '2rem'
+            paddingLeft: '1rem',
+            paddingRight: '1rem'
           }}
         >
           {infiniteCategories.map((category, index) => (
@@ -134,15 +145,14 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
               }}
             >
               {/* Circular Image Container */}
-              <div className="relative mx-auto mb-4">
+              <div className="relative mx-auto mb-2 md:mb-4">
                 <div 
-                  className="w-44 h-44 md:w-52 md:h-52 lg:w-56 lg:h-56 rounded-full flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 border-4 border-gray-200 group-hover:border-blue-300"
+                  className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 xl:w-56 xl:h-56 rounded-full flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 md:border-4 border-gray-200 group-hover:border-blue-300"
                 >
-                  {/* Product Image */}
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="w-36 h-36 md:w-44 md:h-44 lg:w-48 lg:h-48 object-contain transition-transform duration-300 group-hover:scale-105"
+                    className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 xl:w-48 xl:h-48 object-contain transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = '/api/placeholder/200/200';
@@ -153,7 +163,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
 
               {/* Category Name */}
               <div className="text-center">
-                <h3 className="text-base md:text-lg lg:text-xl font-semibold text-gray-900 uppercase tracking-wide group-hover:text-blue-600 transition-colors duration-300 max-w-32 mx-auto">
+                <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold text-gray-900 uppercase tracking-wide group-hover:text-blue-600 transition-colors duration-300 max-w-24 sm:max-w-28 md:max-w-32 mx-auto leading-tight">
                   {category.name}
                 </h3>
               </div>

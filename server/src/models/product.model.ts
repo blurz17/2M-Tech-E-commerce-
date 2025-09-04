@@ -1,7 +1,7 @@
 // server/src/models/product.model.ts
 import mongoose from "mongoose";
 
-// Updated IProduct interface with discount and netPrice
+// Updated IProduct interface with status
 export interface IProduct {
   _id?: string;
   name: string;
@@ -17,6 +17,7 @@ export interface IProduct {
   photoPublicIds: string[];
   currencySymbol?: string;
   featured?: boolean;
+  status: boolean; // New field: true = published, false = unpublished
   createdAt?: Date;  
   updatedAt?: Date;  
 }
@@ -76,6 +77,11 @@ const productSchema = new mongoose.Schema({
     featured: {
         type: Boolean,
         default: false,
+    },
+    status: {
+        type: Boolean,
+        default: true, // Default is published
+        required: true
     }
 }, { timestamps: true });
 

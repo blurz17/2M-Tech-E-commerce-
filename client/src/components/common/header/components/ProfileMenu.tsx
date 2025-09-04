@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, ChevronDown, LogOut, Package } from 'lucide-react';
+import { User, ChevronDown, LogOut } from 'lucide-react';
 import { User as UserType } from '../types';
 
 interface ProfileMenuProps {
@@ -73,16 +73,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 <User className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
                 <span>Profile</span>
               </motion.button>
-              
-              <motion.button
-                onClick={() => navigate('/my-orders')}
-                className="flex items-center space-x-3 w-full px-4 py-2.5 md:py-3 text-left text-sm md:text-base text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-200"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Package className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
-                <span>My Orders</span>
-              </motion.button>
+            
               
               <div className="mx-2 my-1 h-px bg-gray-200"></div>
               

@@ -25,8 +25,8 @@ const storage = new CloudinaryStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
-        files: 5 // Maximum 5 files
+        fileSize: 10 * 1024 * 1024, // 5MB limit
+        files: 10 // Maximum 5 files
     },
     fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
         // Check file type
@@ -53,7 +53,7 @@ const uploadImage = (fieldName: string) => {
 };
 
 // For multiple images upload with better error handling
-const uploadMultipleImages = (fieldName: string, maxCount: number = 5) => {
+const uploadMultipleImages = (fieldName: string, maxCount: number = 10) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const uploadMultiple = upload.array(fieldName, maxCount);
         uploadMultiple(req, res, (err: any) => {
@@ -62,7 +62,7 @@ const uploadMultipleImages = (fieldName: string, maxCount: number = 5) => {
                 let errorMessage = 'Images upload failed';
                 
                 if (err.code === 'LIMIT_FILE_SIZE') {
-                    errorMessage = 'File size too large. Maximum 5MB per file.';
+                    errorMessage = 'File size too large. Maximum 10MB per file.';
                 } else if (err.code === 'LIMIT_FILE_COUNT') {
                     errorMessage = `Too many files. Maximum ${maxCount} files allowed.`;
                 } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {

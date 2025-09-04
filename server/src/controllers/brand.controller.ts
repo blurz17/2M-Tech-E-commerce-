@@ -154,11 +154,11 @@ export const deleteBrand = asyncHandler(async (req: Request, res: Response, next
     });
 });
 
-// @desc    Get brands for dropdown (simple list)
+// @desc    Get brands for dropdown (simple list with images)
 // @route   GET /api/v1/brands/dropdown
 // @access  Public
 export const getBrandsForDropdown = asyncHandler(async (req: Request, res: Response) => {
-    const brands = await Brand.find({}, 'name _id').sort({ name: 1 });
+    const brands = await Brand.find({}, 'name _id image').sort({ name: 1 });
 
     res.status(200).json({
         success: true,

@@ -14,7 +14,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ user, onProfileHand
   return (
     <>
       {/* Enhanced Professional Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30  backdrop-blur-md border-t border-gray-200/60 shadow-lg">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30  bg-white ">
         <div className="grid grid-cols-4 px-2">
           {bottomNavigationItems.map((item) => (
             <motion.div key={item.to} whileTap={{ scale: 0.3 }}>

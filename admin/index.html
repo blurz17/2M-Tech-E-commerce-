@@ -5,21 +5,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- Title and Description -->
-    <title>2M Technology - احدث كاميرات المراقبة واجهزه الكمبيوتر واللاب توب واكسسوارات اللاب توب والكمبيوتر والدش عاليه الجوده</title>
-<meta name="description" content="متجر 2M للتكنولوجيا - نوفر أحدث كاميرات المراقبة عالية الجودة وأجهزة الكمبيوتر والأجهزة المحمولة وإكسسوارات الكمبيوتر والأجهزة المحمولة وأنظمة الأقمار الصناعية الرقمية بأفضل الأسعار مع ضمان شامل." />    
-    
-    <!-- Keywords -->
-    <meta name="keywords" content="surveillance cameras, computers, laptops, computer accessories, digital satellite, 2M Technology, technology, security, monitoring, high-quality computers, laptops" />
+    <!-- Dynamic Title and Description - will be replaced by useConstants -->
+    <title>{{META_TITLE}}</title>
+    <meta name="description" content="{{META_DESCRIPTION}}" />
+    <meta name="keywords" content="{{META_KEYWORDS}}" />
     
     <!-- Author and Robots -->
-    <meta name="author" content="2M Technology Store" />
+    <meta name="author" content="{{COMPANY_NAME}}" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    
-   <!-- Updated Favicon Configuration for Better Google Search Visibility -->
-<link rel="icon" type="image/svg+xml" href="/logo.svg" />
-<link rel="icon" type="image/x-icon" href="/favicon.ico" />
-<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 
 <!-- Ensure you have these sizes - Google prefers 48x48 minimum -->
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -30,54 +23,47 @@
 <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
 <link rel="manifest" href="/site.webmanifest" />
 
-<!-- Optional: Specify the primary favicon for search engines -->
-<link rel="icon" href="/favicon-48x48.png" sizes="48x48" type="image/png" />
 
     
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph / Facebook - Dynamic content -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://2mtechnology.store" />
-    <meta property="og:title" content="2M Technology - Latest Surveillance Cameras and High-Quality Computers" />
-    <meta property="og:description" content="2M Technology Store - The latest high-quality surveillance cameras, computers, laptops, and accessories at the best prices." />
-    <meta property="og:image" content="https://2mtechnology.store/og-image.jpg" />
+    <meta property="og:url" content="{{WEBSITE_URL}}" />
+    <meta property="og:title" content="{{META_TITLE}}" />
+    <meta property="og:description" content="{{META_DESCRIPTION}}" />
+    <meta property="og:image" content="{{WEBSITE_URL}}/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="2M Technology Store" />
+    <meta property="og:site_name" content="{{COMPANY_NAME}}" />
     
-    <!-- Twitter Card -->
+    <!-- Twitter Card - Dynamic content -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="2M Technology - Latest Surveillance Cameras and High-Quality Computers" />
-    <meta name="twitter:description" content="2M Technology Store - The latest high-quality surveillance cameras, computers, laptops, and accessories at the best prices." />
-    <meta name="twitter:image" content="https://2mtechnology.store/og-image.jpg" />
-    
-    <!-- Arabic Font Support (Optional) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Preload Critical Resources -->
-    <link rel="preload" href="/logo.svg" as="image" type="image/svg+xml" />
-    
+    <meta name="twitter:title" content="{{META_TITLE}}" />
+    <meta name="twitter:description" content="{{META_DESCRIPTION}}" />
+    <meta name="twitter:image" content="{{WEBSITE_URL}}/og-image.jpg" />
+
     <!-- Theme Color -->
     <meta name="theme-color" content="#6366f1" />
     <meta name="msapplication-TileColor" content="#6366f1" />
     
-   <!-- Structured Data -->
-<script type="application/ld+json">
+   <!-- Structured Data - Dynamic content -->
+<script type="application/ld+json" id="structured-data">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "2M Technology Store",
-  "alternateName": "2M Technology",
-  "url": "https://2mtechnology.store",
-  "logo": "https://2mtechnology.store/logo.svg",
-  "image": "https://2mtechnology.store/og-image.jpg",
-  "description": "2M Technology Store - We provide the latest high-quality surveillance cameras, computers, laptops, computer and laptop accessories, and digital satellite systems at the best prices with full warranty.",
+  "name": "{{COMPANY_NAME}}",
+  "alternateName": "{{COMPANY_NAME}}",
+  "url": "{{WEBSITE_URL}}",
+  "logo": "{{LOGO_URL}}",
+  "image": "{{WEBSITE_URL}}/og-image.jpg",
+  "description": "{{META_DESCRIPTION}}",
+  "telephone": "{{PHONE}}",
+  "email": "{{EMAIL}}",
   "address": {
     "@type": "PostalAddress",
+    "streetAddress": "{{ADDRESS}}",
     "addressCountry": "EG"
   },
-  "sameAs": []
+  "sameAs": ["{{FACEBOOK}}", "{{INSTAGRAM}}", "{{TWITTER}}", "{{LINKEDIN}}"]
 }
 </script>
 </head>
@@ -85,17 +71,6 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
-  
-  <!-- Google Analytics (Replace GA_MEASUREMENT_ID with your actual ID) -->
-  <!--
-  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'GA_MEASUREMENT_ID');
-  </script>
-  -->
-</body>
+
 
 </html>

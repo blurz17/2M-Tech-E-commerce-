@@ -27,7 +27,7 @@
   },
   "include": [
     "src"
-, "../client/src/components/common/SafeHtmlRenderer.tsx", "../client/src/components/common/filesRelatedProductDetails.tsx"  ],
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"

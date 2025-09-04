@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { socialLinks } from '../constants';
+import { useSocialLinks } from '../constants';
 
 const SocialMediaSection: React.FC = () => {
+  const socialLinks = useSocialLinks();
+
   return (
     <motion.div 
       className="px-6 py-4 border-t border-gray-100"

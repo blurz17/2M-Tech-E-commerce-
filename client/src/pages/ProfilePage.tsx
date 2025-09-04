@@ -1,97 +1,123 @@
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
   Package, 
-  Settings, 
   Calendar,
-  Mail,
-  Shield,
-  Eye,
-  EyeOff,
   Edit3,
   Save,
   X,
   Clock,
-  MapPin,
-  Phone,
   Truck,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2,
+  Camera,
+  Upload
 } from 'lucide-react';
 import { RootState } from '../redux/store';
+import { useMyOrdersQuery } from '../redux/api/order.api';
+import { useUpdateProfileMutation } from '../redux/api/user.api';
+import { userExists } from '../redux/reducers/user.reducer';
 
 const ProfilePage: React.FC = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'settings'>('profile');
-  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
+  const dispatch = useDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
-    email: user?.email || '',
-    phone: '',
-    address: ''
+    dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+    gender: user?.gender || 'male'
   });
 
-  // Mock orders data - replace with actual API call
-  const mockOrders = [
-    {
-      id: 'ORD-001',
-      date: '2025-01-15',
-      status: 'delivered',
-      total: 299.99,
-      items: [
-        { name: 'Laptop Stand', quantity: 1, price: 149.99 },
-        { name: 'Wireless Mouse', quantity: 2, price: 75.00 }
-      ]
-    },
-    {
-      id: 'ORD-002',
-      date: '2025-01-10',
-      status: 'shipped',
-      total: 89.99,
-      items: [
-        { name: 'USB-C Cable', quantity: 3, price: 29.99 }
-      ]
-    },
-    {
-      id: 'ORD-003',
-      date: '2025-01-05',
-      status: 'processing',
-      total: 199.99,
-      items: [
-        { name: 'Bluetooth Headphones', quantity: 1, price: 199.99 }
-      ]
+  // Fetch real orders from API
+  const { data: ordersData, isLoading: ordersLoading, isError: ordersError } = useMyOrdersQuery('');
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
     }
-  ];
+  };
+
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('name', editForm.name);
+      formData.append('gender', editForm.gender);
+      formData.append('dob', editForm.dob);
+      
+      if (selectedFile) {
+        formData.append('photo', selectedFile);
+      }
+
+      const response = await updateProfile(formData).unwrap();
+      
+      if (response.success) {
+        // Update Redux state with new user data
+        dispatch(userExists(response.user));
+        setIsEditing(false);
+        setSelectedFile(null);
+        setPreviewUrl('');
+        // Show success message or toast
+        console.log('Profile updated successfully');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      // Show error message or toast
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditForm({
+      name: user?.name || '',
+      dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+      gender: user?.gender || 'male'
+    });
+    setSelectedFile(null);
+    setPreviewUrl('');
+  };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'delivered': return 'text-green-600 bg-green-50 border-green-200';
-      case 'shipped': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'processing': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'shipped': 
+      case 'processing': return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 'cancelled': return 'text-red-600 bg-red-50 border-red-200';
       default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'delivered': return CheckCircle;
       case 'shipped': return Truck;
-      case 'processing': return Clock;
+      case 'processing': 
+      case 'pending': return Clock;
       case 'cancelled': return AlertCircle;
       default: return Package;
     }
-  };
-
-  const handleSaveProfile = () => {
-    // Implement API call to update profile
-    console.log('Saving profile:', editForm);
-    setIsEditing(false);
   };
 
   if (!user) {
@@ -128,24 +154,38 @@ const ProfilePage: React.FC = () => {
         {/* Header Section */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-12 text-white">
           <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-            <motion.img
-              src={user.photoURL}
-              alt="Profile"
-              className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            />
+            <div className="relative">
+              <motion.img
+                src={previewUrl || user.photoURL}
+                alt="Profile"
+                className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              />
+              {isEditing && (
+                <motion.button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors duration-200"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Camera className="w-4 h-4 text-gray-600" />
+                </motion.button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
             <div className="text-center md:text-left">
-              <h1 className="text-3xl font-bold mb-2">{user.name}</h1>
+              <h1 className="text-3xl font-bold mb-2">
+                <span className="text-lg">Hello </span> 
+                {isEditing ? editForm.name : user.name}
+              </h1>
               <p className="text-purple-100 mb-2">{user.email}</p>
-              <div className="flex items-center justify-center md:justify-start space-x-4 text-sm">
-                <span className="bg-white/20 px-3 py-1 rounded-full">
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </span>
-                <span className="bg-white/20 px-3 py-1 rounded-full">
-                  {user.provider}
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -156,7 +196,6 @@ const ProfilePage: React.FC = () => {
             {[
               { id: 'profile', label: 'Profile Info', icon: User },
               { id: 'orders', label: 'My Orders', icon: Package },
-              { id: 'settings', label: 'Settings', icon: Settings }
             ].map((tab) => (
               <motion.button
                 key={tab.id}
@@ -192,134 +231,153 @@ const ProfilePage: React.FC = () => {
                 <div className="bg-gray-50 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
-                    <div className="flex items-center space-x-3">
-                      <motion.button
-                        onClick={() => setShowPersonalInfo(!showPersonalInfo)}
-                        className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-white transition-colors duration-200"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {showPersonalInfo ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </motion.button>
-                      <motion.button
-                        onClick={() => setIsEditing(!isEditing)}
-                        className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {isEditing ? <X className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-                        <span>{isEditing ? 'Cancel' : 'Edit'}</span>
-                      </motion.button>
-                    </div>
+                    <motion.button
+                      onClick={() => isEditing ? handleCancelEdit() : setIsEditing(true)}
+                      className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {isEditing ? <X className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+                      <span>{isEditing ? 'Cancel' : 'Edit'}</span>
+                    </motion.button>
                   </div>
 
-                  {showPersonalInfo && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                    >
-                      {isEditing ? (
-                        <>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                            <input
-                              type="text"
-                              value={editForm.name}
-                              onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
+                  <motion.div
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 1 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    {isEditing ? (
+                      <>
+                        {/* Edit Form */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Full Name</label>
+                          <input
+                            type="text"
+                            value={editForm.name}
+                            onChange={(e) => handleEditFormChange('name', e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Date of Birth</label>
+                          <input
+                            type="date"
+                            value={editForm.dob}
+                            onChange={(e) => handleEditFormChange('dob', e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Gender</label>
+                          <select
+                            value={editForm.gender}
+                            onChange={(e) => handleEditFormChange('gender', e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                          >
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Profile Photo</label>
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-1">
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                              />
+                              <motion.button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center space-x-2"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Upload className="w-4 h-4" />
+                                <span>{selectedFile ? selectedFile.name : 'Choose new photo'}</span>
+                              </motion.button>
+                            </div>
+                            {(previewUrl || selectedFile) && (
+                              <img
+                                src={previewUrl}
+                                alt="Preview"
+                                className="w-16 h-16 rounded-lg object-cover border-2 border-gray-200"
+                              />
+                            )}
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                            <input
-                              type="email"
-                              value={editForm.email}
-                              onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                            <input
-                              type="tel"
-                              value={editForm.phone}
-                              onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                              placeholder="Add phone number"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                            <input
-                              type="text"
-                              value={editForm.address}
-                              onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                              placeholder="Add address"
-                            />
-                          </div>
-                          <div className="md:col-span-2">
-                            <motion.button
-                              onClick={handleSaveProfile}
-                              className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                            >
+                        </div>
+
+                        <div className="md:col-span-2 flex items-center space-x-4">
+                          <motion.button
+                            onClick={handleSaveProfile}
+                            disabled={isUpdating}
+                            className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {isUpdating ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
                               <Save className="w-4 h-4" />
-                              <span>Save Changes</span>
-                            </motion.button>
+                            )}
+                            <span>{isUpdating ? 'Saving...' : 'Save Changes'}</span>
+                          </motion.button>
+                          <motion.button
+                            onClick={handleCancelEdit}
+                            className="flex items-center space-x-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <X className="w-4 h-4" />
+                            <span>Cancel</span>
+                          </motion.button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Display Mode */}
+                        <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
+                          <User className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="text-sm text-gray-500">Full Name</p>
+                            <p className="font-medium">{user.name}</p>
                           </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
-                            <User className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Full Name</p>
-                              <p className="font-medium">{user.name}</p>
-                            </div>
+                        </div>
+                       
+                        <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
+                          <Calendar className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="text-sm text-gray-500">Date of Birth</p>
+                            <p className="font-medium">{new Date(user.dob).toLocaleDateString()}</p>
                           </div>
-                          <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
-                            <Mail className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Email</p>
-                              <p className="font-medium">{user.email}</p>
-                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
+                          <User className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="text-sm text-gray-500">Gender</p>
+                            <p className="font-medium capitalize">{user.gender}</p>
                           </div>
-                          <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
-                            <Shield className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Role</p>
-                              <p className="font-medium capitalize">{user.role}</p>
-                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
+                          <User className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="text-sm text-gray-500">Email</p>
+                            <p className="font-medium">{user.email}</p>
                           </div>
-                          <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
-                            <Calendar className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Date of Birth</p>
-                              <p className="font-medium">{new Date(user.dob).toLocaleDateString()}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
-                            <User className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Gender</p>
-                              <p className="font-medium capitalize">{user.gender}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3 p-4 bg-white rounded-lg">
-                            <Shield className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-sm text-gray-500">Sign In Method</p>
-                              <p className="font-medium capitalize">{user.provider}</p>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  )}
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -335,16 +393,45 @@ const ProfilePage: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-2xl font-bold text-gray-900">My Orders</h3>
-                  <p className="text-gray-500">{mockOrders.length} orders</p>
+                  {ordersData?.orders && (
+                    <p className="text-gray-500">{ordersData.orders.length} orders</p>
+                  )}
                 </div>
 
-                {mockOrders.length > 0 ? (
+                {ordersLoading ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center justify-center py-12"
+                  >
+                    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                    <span className="ml-2 text-gray-600">Loading orders...</span>
+                  </motion.div>
+                ) : ordersError ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-12"
+                  >
+                    <AlertCircle className="w-16 h-16 mx-auto text-red-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Orders</h3>
+                    <p className="text-gray-500 mb-6">There was an error loading your orders. Please try again.</p>
+                    <motion.button
+                      onClick={() => window.location.reload()}
+                      className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors duration-200"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Retry
+                    </motion.button>
+                  </motion.div>
+                ) : ordersData?.orders && ordersData.orders.length > 0 ? (
                   <div className="space-y-4">
-                    {mockOrders.map((order, index) => {
+                    {ordersData.orders.map((order, index) => {
                       const StatusIcon = getStatusIcon(order.status);
                       return (
                         <motion.div
-                          key={order.id}
+                          key={order._id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -356,9 +443,9 @@ const ProfilePage: React.FC = () => {
                                 <StatusIcon className="w-5 h-5" />
                               </div>
                               <div>
-                                <h4 className="font-semibold text-gray-900">Order #{order.id}</h4>
+                                <h4 className="font-semibold text-gray-900">Order #{order._id}</h4>
                                 <p className="text-sm text-gray-500">
-                                  Placed on {new Date(order.date).toLocaleDateString()}
+                                  Placed on {new Date(order.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
@@ -370,35 +457,40 @@ const ProfilePage: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="border-t border-gray-100 pt-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3">Items:</h5>
-                            <div className="space-y-2">
-                              {order.items.map((item, itemIndex) => (
-                                <div key={itemIndex} className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                                    <span className="text-gray-700">{item.name}</span>
-                                    <span className="text-gray-500">× {item.quantity}</span>
+                          {/* Order Items */}
+                          {order.orderItems && order.orderItems.length > 0 && (
+                            <div className="border-t border-gray-100 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-3">Items:</h5>
+                              <div className="space-y-2">
+                                {order.orderItems.map((item, itemIndex) => (
+                                  <div key={itemIndex} className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                                      <span className="text-gray-700">{item.name}</span>
+                                      <span className="text-gray-500">× {item.quantity}</span>
+                                    </div>
+                                    <span className="font-medium text-gray-900">${(item.price * item.quantity).toFixed(2)}</span>
                                   </div>
-                                  <span className="font-medium text-gray-900">${item.price.toFixed(2)}</span>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                             <motion.button
+                              onClick={() => navigate(`/order/${order._id}`)}
                               className="text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
                               View Details
                             </motion.button>
-                            {order.status === 'delivered' && (
+                            {order.status.toLowerCase() === 'delivered' && (
                               <motion.button
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200"
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
+                                onClick={() => navigate('/products')}
                               >
                                 Reorder
                               </motion.button>
@@ -427,68 +519,6 @@ const ProfilePage: React.FC = () => {
                     </motion.button>
                   </motion.div>
                 )}
-              </motion.div>
-            )}
-
-            {activeTab === 'settings' && (
-              <motion.div
-                key="settings"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                <h3 className="text-2xl font-bold text-gray-900">Account Settings</h3>
-                
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Privacy & Security</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">Two-factor Authentication</p>
-                        <p className="text-sm text-gray-500">Add an extra layer of security</p>
-                      </div>
-                      <motion.button
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        Enable
-                      </motion.button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">Email Notifications</p>
-                        <p className="text-sm text-gray-500">Receive updates about your orders</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-                  <h4 className="text-lg font-semibold text-red-900 mb-4">Danger Zone</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-red-900">Delete Account</p>
-                        <p className="text-sm text-red-700">Permanently delete your account and all data</p>
-                      </div>
-                      <motion.button
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        Delete Account
-                      </motion.button>
-                    </div>
-                  </div>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>

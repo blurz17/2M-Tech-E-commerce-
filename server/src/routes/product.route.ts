@@ -23,8 +23,8 @@ router.get('/', (req, res) => {
 });
 
 // Admin-only routes
-router.post('/new', authenticateUser, adminOnly, uploadMultipleImages('photos', 5), createNewProduct);
-router.put('/:id', authenticateUser, adminOnly, uploadMultipleImages('photos', 5), updateProduct);
+router.post('/new', authenticateUser, adminOnly, uploadMultipleImages('photos', 10), createNewProduct);
+router.put('/:id', authenticateUser, adminOnly, uploadMultipleImages('photos', 10), updateProduct);
 router.delete('/:id', authenticateUser, adminOnly, deleteProduct);
 router.patch('/feature/:id', authenticateUser, adminOnly, toggleFeaturedStatus);
 
@@ -35,7 +35,8 @@ router.get('/latest', getLatestProducts);
 router.get('/categories', getAllCategories);
 router.get('/search', searchProducts);
 router.get('/:id', getProductDetails);
-router.get('/category/:category', getProductsByCategory);
+// In product.route.ts
+router.get('/category/:categoryId', getProductsByCategory);
 router.get('/brand/:brandId', getProductsByBrand); // New route for products by brand
 
 export default router;

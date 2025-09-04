@@ -6,18 +6,18 @@ import { Brand } from "../models/brand.model";
 import {  NewProductBody, SearchProductsQuery } from "../types/types";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
+import { Banner } from "../models/banner.model"; // Add this import
+
 import { deleteMultipleImages } from "../utils/cloudinary";
 import { ProductService } from "../services/product.service";
 import mongoose from "mongoose";
-import { Currency } from "../models/currency.model"; // Added import
 import { getDefaultCurrencySymbol } from "../utils/helper";
-
 
 getDefaultCurrencySymbol ;
 
 export const createNewProduct = asyncHandler(
     async (req: Request<{}, {}, NewProductBody>, res: Response, next) => {
-        const { name, categories, subcategories, brand, price, discount = 0, stock, description } = req.body;
+        const { name, categories, subcategories, brand, price, discount = 0, stock, description, status = true } = req.body;
         
         // Validate required fields
         if (!name || !categories || !brand || !price || !stock || !description) {
@@ -95,7 +95,9 @@ export const createNewProduct = asyncHandler(
                 stock: Number(stock),
                 photos: photoData.photos,
                 photoPublicIds: photoData.photoPublicIds,
-                currencySymbol
+                currencySymbol,
+                status: typeof status === 'string' ? status === 'true' : Boolean(status)
+
             });
 
             // Populate for response
@@ -120,15 +122,65 @@ export const createNewProduct = asyncHandler(
 );
 
 // Update product
+const updateProductDiscounts = async (bannerProducts: any[]) => {
+  for (const bannerProduct of bannerProducts) {
+    const product = await Product.findById(bannerProduct.product);
+    if (product) {
+      // Update the product's discount directly
+      product.discount = bannerProduct.discountPercentage;
+      
+      // Recalculate net price
+      product.netPrice = product.price - ((product.price * bannerProduct.discountPercentage) / 100);
+      
+      await product.save();
+    }
+  }
+};
+
+// NEW: Helper function to sync product discount to banners
+const syncProductDiscountToBanners = async (productId: string, newDiscount: number) => {
+  try {
+    // Find all banners that contain this product
+    const bannersWithProduct = await Banner.find({
+      'products.product': productId,
+      isActive: true // Only sync active banners
+    });
+
+    // Update the discount in each banner
+    for (const banner of bannersWithProduct) {
+      let updated = false;
+      banner.products = banner.products.map(bannerProduct => {
+        if (bannerProduct.product.toString() === productId) {
+          bannerProduct.discountPercentage = newDiscount;
+          updated = true;
+        }
+        return bannerProduct;
+      });
+
+      if (updated) {
+        await banner.save();
+      }
+    }
+
+    console.log(`Updated discount in ${bannersWithProduct.length} banners for product ${productId}`);
+  } catch (error) {
+    console.error('Error syncing product discount to banners:', error);
+  }
+};
+
+// UPDATED: Complete updateProduct function with banner synchronization
 export const updateProduct = asyncHandler(
     async (req: Request, res: Response, next) => {
         const id = req.params.id;
-        const { name, categories, subcategories, brand, price, discount, stock, description } = req.body;
+        const { name, categories, subcategories, brand, price, discount, stock, description, status } = req.body;
 
         const product = await Product.findById(id);
         if (!product) {
             return next(new ApiError(404, "Product not found"));
         }
+
+        // Store the old discount for comparison
+        const oldDiscount = product.discount;
 
         // Validate discount if provided
         if (discount !== undefined) {
@@ -213,10 +265,22 @@ export const updateProduct = asyncHandler(
         if (price) product.price = Number(price);
         if (stock !== undefined) product.stock = Number(stock);
         if (description) product.description = description.trim();
+        
+        // Handle status correctly
+        if (status !== undefined) {
+            // Handle string "false" correctly
+            product.status = status === 'true' || status === true;
+        }
 
-        // The netPrice will be calculated automatically by the pre-save middleware
-
+        // Save the updated product
         const updatedProduct = await product.save();
+
+        // NEW: Sync discount to banners if discount was changed
+        if (discount !== undefined && Number(discount) !== oldDiscount) {
+            await syncProductDiscountToBanners(id, Number(discount));
+        }
+
+        // Populate the product for response
         const populatedProduct = await Product.findById(updatedProduct._id)
             .populate('categories', 'name _id')
             .populate('subcategories', 'name _id')
@@ -229,12 +293,16 @@ export const updateProduct = asyncHandler(
         });
     }
 );
-
-// Get latest products
+// Get latest products - WITH CONDITIONAL STATUS FILTER
 export const getLatestProducts = asyncHandler(
     async (req: Request, res: Response) => {
-        const limit = Math.min(Number(req.query.limit) || 20, 500);
-        const products = await Product.find()
+        const limit = Math.min(Number(req.query.limit) || 1, 100);
+        const includeUnpublished = req.query.includeUnpublished === 'true';
+        
+        // Build query - only filter by status if not admin request
+        const query = includeUnpublished ? {} : { status: true };
+        
+        const products = await Product.find(query)
             .populate('categories', 'name _id')
             .populate('subcategories', 'name _id')
             .populate('brand', 'name _id')
@@ -265,19 +333,25 @@ export const getAllCategories = asyncHandler(
     }
 );
 
-// Get all products with filtering and pagination
+// Get all products with filtering and pagination - WITH CONDITIONAL STATUS FILTER
 export const getAllProducts = asyncHandler(
     async (req: Request, res: Response) => {
         const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 8;
+        const limit = Number(req.query.limit) || 20;
         const skip = (page - 1) * limit;
         const category = req.query.category as string;
         const subcategory = req.query.subcategory as string;
         const brand = req.query.brand as string;
+        const includeUnpublished = req.query.includeUnpublished === 'true';
         
         const sortBy = req.query.sortBy ? JSON.parse(req.query.sortBy as string) : null;
         const sort = ProductService.buildSortQuery(sortBy);
-        const query = await ProductService.buildFilterQuery({ category, subcategory, brand });
+        let query = await ProductService.buildFilterQuery({ category, subcategory, brand });
+        
+        // Add status filter only if not admin request
+        if (!includeUnpublished) {
+            query.status = true;
+        }
 
         const [totalProducts, products] = await Promise.all([
             Product.countDocuments(query),
@@ -300,7 +374,7 @@ export const getAllProducts = asyncHandler(
     }
 );
 
-// Get product details
+// Get product details - NO STATUS FILTER (so admin can see unpublished products)
 export const getProductDetails = asyncHandler(
     async (req: Request, res: Response, next) => {
         const product = await Product.findById(req.params.id)
@@ -319,14 +393,21 @@ export const getProductDetails = asyncHandler(
     }
 );
 
-// Search products
+// Search products - WITH CONDITIONAL STATUS FILTER
 export const searchProducts = asyncHandler(
     async (req: Request<{}, {}, {}, SearchProductsQuery>, res: Response) => {
         const { page = '1' } = req.query;
-        const limit = Number(process.env.PRODUCTS_PER_PAGE) || 6;
+        const limit = Number(process.env.PRODUCTS_PER_PAGE);
         const skip = (Number(page) - 1) * limit;
+        const includeUnpublished = req.query.includeUnpublished === 'true';
 
-        const query = await ProductService.buildSearchQuery(req.query);
+        let query = await ProductService.buildSearchQuery(req.query);
+        
+        // Add status filter only if not admin request
+        if (!includeUnpublished) {
+            query.status = true;
+        }
+        
         const sort = ProductService.buildSortQuery({ 
             id: req.query.sort === 'asc' ? 'price' : req.query.sort === 'desc' ? 'price' : '', 
             desc: req.query.sort === 'desc' 
@@ -398,13 +479,45 @@ export const toggleFeaturedStatus = asyncHandler(
     }
 );
 
-// Get featured products
-export const getFeaturedProducts = asyncHandler(
-    async (req: Request, res: Response) => {
-        const products = await Product.find({ featured: true })
+// Toggle published status (new endpoint)
+export const togglePublishedStatus = asyncHandler(
+    async (req: Request, res: Response, next) => {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return next(new ApiError(404, "Product not found"));
+        }
+
+        product.status = !product.status;
+        await product.save();
+
+        const populatedProduct = await Product.findById(product._id)
             .populate('categories', 'name _id')
             .populate('subcategories', 'name _id')
             .populate('brand', 'name _id');
+
+        return res.status(200).json({
+            success: true,
+            message: `Product ${product.status ? 'published' : 'unpublished'} successfully`,
+            product: populatedProduct
+        });
+    }
+);
+
+// Get featured products - WITH CONDITIONAL STATUS FILTER
+export const getFeaturedProducts = asyncHandler(
+    async (req: Request, res: Response) => {
+        const includeUnpublished = req.query.includeUnpublished === 'true';
+        
+        // Build query - featured products with conditional status filter
+        const query = includeUnpublished 
+            ? { featured: true } 
+            : { featured: true, status: true };
+            
+        const products = await Product.find(query)
+            .populate('categories', 'name _id')
+            .populate('subcategories', 'name _id')
+            .populate('brand', 'name _id');
+            
         return res.status(200).json({
             success: true,
             products
@@ -412,11 +525,12 @@ export const getFeaturedProducts = asyncHandler(
     }
 );
 
-// Get products by category
+// Get products by category - WITH CONDITIONAL STATUS FILTER
 export const getProductsByCategory = asyncHandler(
     async (req: Request, res: Response, next) => {
         const { categoryId } = req.params;
         const limit = Math.min(Number(req.query.limit) || 20, 500);
+        const includeUnpublished = req.query.includeUnpublished === 'true';
 
         if (!mongoose.Types.ObjectId.isValid(categoryId)) {
             return next(new ApiError(400, "Invalid category ID"));
@@ -427,9 +541,12 @@ export const getProductsByCategory = asyncHandler(
             return next(new ApiError(404, "Category not found"));
         }
 
-        const products = await Product.find({ 
-            categories: categoryId 
-        })
+        // Build query with conditional status filter
+        const query = includeUnpublished 
+            ? { categories: categoryId }
+            : { categories: categoryId, status: true };
+
+        const products = await Product.find(query)
         .populate('categories', 'name _id')
         .populate('subcategories', 'name _id')
         .populate('brand', 'name _id')
@@ -445,11 +562,12 @@ export const getProductsByCategory = asyncHandler(
     }
 );
 
-// Get products by subcategory
+// Get products by subcategory - WITH CONDITIONAL STATUS FILTER
 export const getProductsBySubcategory = asyncHandler(
     async (req: Request, res: Response, next) => {
         const { subcategoryId } = req.params;
         const limit = Math.min(Number(req.query.limit) || 20, 500);
+        const includeUnpublished = req.query.includeUnpublished === 'true';
 
         if (!mongoose.Types.ObjectId.isValid(subcategoryId)) {
             return next(new ApiError(400, "Invalid subcategory ID"));
@@ -460,9 +578,12 @@ export const getProductsBySubcategory = asyncHandler(
             return next(new ApiError(404, "Subcategory not found"));
         }
 
-        const products = await Product.find({ 
-            subcategories: subcategoryId 
-        })
+        // Build query with conditional status filter
+        const query = includeUnpublished 
+            ? { subcategories: subcategoryId }
+            : { subcategories: subcategoryId, status: true };
+
+        const products = await Product.find(query)
         .populate('categories', 'name _id')
         .populate('subcategories', 'name _id')
         .populate('brand', 'name _id')
@@ -479,11 +600,12 @@ export const getProductsBySubcategory = asyncHandler(
     }
 );
 
-// Get products by brand
+// Get products by brand - WITH CONDITIONAL STATUS FILTER
 export const getProductsByBrand = asyncHandler(
     async (req: Request, res: Response, next) => {
         const { brandId } = req.params;
-        const limit = Math.min(Number(req.query.limit) || 20, 500);
+        const limit = Math.min(Number(req.query.limit) );
+        const includeUnpublished = req.query.includeUnpublished === 'true';
 
         if (!mongoose.Types.ObjectId.isValid(brandId)) {
             return next(new ApiError(400, "Invalid brand ID"));
@@ -494,7 +616,12 @@ export const getProductsByBrand = asyncHandler(
             return next(new ApiError(404, "Brand not found"));
         }
 
-        const products = await Product.find({ brand: brandId })
+        // Build query with conditional status filter
+        const query = includeUnpublished 
+            ? { brand: brandId }
+            : { brand: brandId, status: true };
+
+        const products = await Product.find(query)
             .populate('categories', 'name _id')
             .populate('subcategories', 'name _id')
             .populate('brand', 'name _id')

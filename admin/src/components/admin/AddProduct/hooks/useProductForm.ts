@@ -1,3 +1,4 @@
+// admin/src/components/admin/AddProduct/hooks/useProductForm.ts
 import { useState, ChangeEvent } from 'react';
 import { ProductFormData } from '../types';
 
@@ -10,14 +11,17 @@ export const useProductForm = () => {
     description: '',
     stock: 0,
     price: 0,
-    discount: 0, // Added discount field
+    discount: 0,
+    status: true, // Default to published
   });
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'stock' || name === 'price' || name === 'discount' 
+      [name]: type === 'checkbox' 
+        ? (e.target as HTMLInputElement).checked
+        : name === 'stock' || name === 'price' || name === 'discount' 
         ? parseFloat(value) || 0 
         : value
     }));
@@ -45,6 +49,14 @@ export const useProductForm = () => {
     }));
   };
 
+  // Dedicated status handler
+  const handleStatusChange = (status: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      status
+    }));
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -54,7 +66,8 @@ export const useProductForm = () => {
       description: '',
       stock: 0,
       price: 0,
-      discount: 0, // Reset discount
+      discount: 0,
+      status: true, // Reset to published
     });
   };
 
@@ -64,8 +77,8 @@ export const useProductForm = () => {
     handleCategoryChange,
     handleSubcategoryChange,
     handleDescriptionChange,
+    handleStatusChange,
     resetForm,
     setFormData
   };
 };
-

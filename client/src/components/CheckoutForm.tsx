@@ -7,11 +7,14 @@ import { RootState } from '../redux/store';
 import { NewOrderRequest } from '../types/api-types';
 import { notify } from '../utils/util';
 import BackButton from '../components/common/BackBtn';
+import { useConstants } from '../hooks/useConstants';
 
 // Define the CheckoutForm component for Cash on Delivery
 const CheckoutForm: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { currencySymbol, constants } = useConstants();
+
 
   const { user } = useSelector((state: RootState) => state.user);
   const {
@@ -99,7 +102,7 @@ const CheckoutForm: React.FC = () => {
       
       <form onSubmit={submitHandler} className="bg-white p-6 rounded-lg shadow-md max-w-lg w-full">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-900">2M Technology</h1>
+          <h1 className="text-3xl font-bold text-blue-900">{constants.companyName}</h1>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
@@ -108,26 +111,26 @@ const CheckoutForm: React.FC = () => {
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex justify-between mb-2">
             <span>Subtotal:</span>
-            <span>EGP {subTotal.toFixed(2)}</span>
+            <span>{currencySymbol} {subTotal}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span>Shipping:</span>
-            <span>EGP {shippingCharges.toFixed(2)}</span>
+            <span>{currencySymbol} {shippingCharges}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span>Tax:</span>
-            <span>EGP {tax.toFixed(2)}</span>
+            <span>{currencySymbol} {tax}</span>
           </div>
           {discount > 0 && (
             <div className="flex justify-between mb-2 text-green-600">
               <span>Discount:</span>
-              <span>-EGP {discount.toFixed(2)}</span>
+              <span>-{currencySymbol} {discount}</span>
             </div>
           )}
           <hr className="my-2" />
           <div className="flex justify-between font-bold text-lg">
             <span>Total:</span>
-            <span>EGP {total.toFixed(2)}</span>
+            <span>{currencySymbol} {total}</span>
           </div>
         </div>
 
@@ -200,7 +203,7 @@ const CheckoutForm: React.FC = () => {
               <div className="text-sm">
                 <p className="font-medium text-yellow-800">Cash on Delivery</p>
                 <p className="text-yellow-700">
-                  Please keep exact change ready. Amount to pay: <strong>EGP {total.toFixed(0)}</strong>
+                  Please keep exact change ready. Amount to pay: <strong>{currencySymbol} {total.toFixed(0)}</strong>
                 </p>
               </div>
             </div>
@@ -212,8 +215,34 @@ const CheckoutForm: React.FC = () => {
           disabled={isProcessing} 
           className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg w-full font-medium transition-colors"
         >
-          {isProcessing ? "Placing Order..." : `Place Order - EGP ${total.toFixed(0)}`}
+          {isProcessing ? "Placing Order..." : `Place Order - ${currencySymbol} ${total.toFixed(0)}`}
         </button>
+
+        {/* Footer Links - Added below the Place Order button */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <ul className="flex flex-col space-y-2 text-center">
+            <li>
+              <a href="pages/faq" className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-300 hover:underline">
+                FAQ
+              </a>
+            </li>
+            <li>
+              <a href="pages/privacy-policy" className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-300 hover:underline">
+                Privacy Policy
+              </a>
+            </li>
+            <li>
+              <a href="pages/terms-conditions" className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-300 hover:underline">
+                Terms & Conditions
+              </a>
+            </li>
+            <li>
+              <a href="pages/refund-policy" className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-300 hover:underline">
+                Refund Policy
+              </a>
+            </li>
+          </ul>
+        </div>
       </form>
 
       <div className="text-center mt-4">

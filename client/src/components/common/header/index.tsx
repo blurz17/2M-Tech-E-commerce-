@@ -17,7 +17,7 @@ import { useProfileMenu } from './hooks/useProfileMenu';
 
 // Import components
 import Logo from './components/Logo';
-import SearchButton from './components/SearchButton';
+import SearchBar from '../../collection_files/SearchBar';
 import ProfileMenu from './components/ProfileMenu';
 import MobileUserButton from './components/MobileUserButton';
 import Sidebar from './components/Sidebar';
@@ -73,32 +73,24 @@ const Header: React.FC = () => {
       <header        
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${         
           isScrolled            
-            ? 'bg-white/98 backdrop-blur-md border-b border-gray-200/80 shadow-sm'            
+            ? ' bg-gray-50'            
             : 'bg-white border-b border-gray-100'       
         }`}     
       >       
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">         
           <div className="flex justify-between items-center h-16 md:h-20 lg:h-24">           
-            {/* Menu Button */}
-            <div className="flex items-center">
-              <motion.button 
-                onClick={toggleSidebar} 
-                className="p-2 md:p-3 lg:p-4 text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Menu className="w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-purple-600" />
-              </motion.button>
+            {/* Logo - Now properly positioned on the left */}
+            <div className="flex items-center flex-shrink-0">
+              <Logo onLogoClick={closeSidebar} />
             </div>
 
-            {/* Logo */}
-            <Logo onLogoClick={closeSidebar} />
+            {/* Search Bar - Takes center space with proper margins */}
+            <div className="flex-1 max-w-2xl mx-4 lg:mx-8">
+              <SearchBar className="!py-0 !px-0 !bg-transparent" />
+            </div>
 
-            {/* Right Side */}
-            <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-3">
-              {/* Search Button */}
-              <SearchButton />
-
+            {/* Right Side - Menu button and profile */}
+            <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-3 flex-shrink-0">
               {/* Desktop Profile Menu */}
               <ProfileMenu
                 user={user}
@@ -112,6 +104,16 @@ const Header: React.FC = () => {
 
               {/* Mobile User Button */}
               <MobileUserButton onClick={profileHandler} />
+
+              {/* Menu Button - Now on the far right */}
+              <motion.button 
+                onClick={toggleSidebar} 
+                className="p-2 md:p-3 lg:p-4 text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Menu className="w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-purple-600" />
+              </motion.button>
             </div>
           </div>
         </div>

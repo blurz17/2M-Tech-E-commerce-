@@ -5,7 +5,7 @@ const Loader: React.FC = () => {
     <div className="flex items-center justify-center min-h-[1000px]">
       <div className="text-center">
         {/* Bigger spinner */}
-        <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-blue-900 mx-auto mb-8"></div>
+        <div className="animate-spin rounded-full h-24 w-24 border-b-4 border-blue-900 mx-auto mb-8"></div>
         
         <p className="text-blue-600 text-lg">Loading...</p>
       </div>

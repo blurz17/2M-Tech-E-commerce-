@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { 
   FaBox, 
   FaSignOutAlt, 
-  FaTimes, 
   FaUsers, 
   FaChevronDown, 
   FaChevronRight, 
@@ -12,15 +11,21 @@ import {
   FaListAlt,
   FaTicketAlt,
   FaSitemap,
-  FaLayerGroup
+  FaLayerGroup, 
+  FaAtom,
+  FaSellcast, 
+  FaBullhorn,
+  FaDollarSign
 } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../../firebaseConfig';
 import { useLogoutUserMutation } from '../../redux/api/user.api';
 import { userNotExists } from '../../redux/reducers/user.reducer';
 import { notify } from '../../utils/util';
-import { FaDollarSign } from 'react-icons/fa';
+import { useConstants } from '../../hooks/useConstants';
+
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
@@ -30,9 +35,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
-
   const [logout] = useLogoutUserMutation();
   const [isProductsOpen, setIsProductsOpen] = useState(false);
+
+  const { constants } = useConstants();
 
   // Check if any product route is active
   const isProductRouteActive = location.pathname === '/admin/products' || location.pathname === '/admin/featured';
@@ -60,11 +66,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
 
   const toggleProductsMenu = () => {
     setIsProductsOpen(!isProductsOpen);
-  };
+  }
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
@@ -79,27 +84,36 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
         } transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:block z-40 flex flex-col`}
         style={{ height: '100vh' }}
       >
-        {/* Mobile Close Button */}
-        <div className="flex justify-between items-center p-4 border-b md:hidden flex-shrink-0">
-          <h1 className="text-xl font-bold text-blue-900">2M Technology</h1>
-          <button 
-            onClick={toggleSidebar} 
-            className="text-2xl text-gray-600 hover:text-gray-800 transition-colors p-1"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Logo and Home Link - Desktop */}
-        <div className="flex-shrink-0 hidden md:block border-b border-gray-100">
-          <Link to="/" onClick={toggleSidebar}>
-            <div className="flex justify-start cursor-pointer p-4 py-6">
-              <h1 className="text-xl font-bold text-blue-900">2M Technology</h1>
+        {/* Header with Logo and Company Name */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white">
+          <Link to="/admin/dashboard" className="flex items-center group">
+            <motion.div 
+              className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14"
+              whileHover={{ scale: 1.1, rotate: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <img 
+                src={constants.logo} 
+                alt={`${constants.companyName} Logo`}
+                className="w-full h-full rounded-lg object-cover transition-all duration-500 ease-out group-hover:brightness-110"
+                onError={(e) => {
+                  // Fallback to default logo if custom logo fails
+                  e.currentTarget.src = '/logo.svg';
+                }}
+              />
+            </motion.div>
+            
+            <div className="ml-3 hidden sm:block">
+              <motion.span 
+                className="text-xl md:text-2xl lg:text-3xl font-bold text-cyan-500 hover:text-cyan-700 tracking-tight cursor-pointer"
+              >
+                {constants.companyName}
+              </motion.span>
             </div>
           </Link>
         </div>
 
-        {/* Navigation Links - Scrollable Area */}
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-2">
             <NavLink
@@ -107,7 +121,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
               className={({ isActive }) =>
                 isActive 
                   ? 'flex items-center p-3 text-purple-600 font-semibold rounded-lg bg-purple-50 border border-purple-200' 
-                  : 'flex items-center p-3 text-blue-800 er:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200'
+                  : 'flex items-center p-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200'
               }
               onClick={toggleSidebar}
             >
@@ -121,8 +135,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
                 onClick={toggleProductsMenu}
                 className={`flex items-center justify-between w-full p-3 text-left rounded-lg transition-all duration-200 ${
                   isProductRouteActive 
-                    ? 'text-purple-600 font-semibold bg-purple-50 border border-purple-200' 
-                    : 'text-red-700 hover:text-purple-600 hover:bg-purple-50'
+                    ? 'text-gray-600 font-semibold bg-purple-50 border border-purple-200' 
+                    : 'text-sky-700 hover:text-sky-900 hover:bg-purple-50'
                 }`}
               >
                 <div className="flex items-center">
@@ -130,8 +144,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
                   <span className="text-base font-medium">Products</span>
                 </div>
                 {isProductsOpen ? 
-                  <FaChevronDown className="text-lg transition-transform duration-300 ease-in-out text-red-900" /> : 
-                  <FaChevronRight className="text-lg transition-transform duration-300 ease-in-out text-red-400" />
+                  <FaChevronDown className="text-lg transition-transform duration-300 ease-in-out" /> : 
+                  <FaChevronRight className="text-lg transition-transform duration-300 ease-in-out" />
                 }
               </button>
               
@@ -148,7 +162,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
                   className={({ isActive }) =>
                     isActive 
                       ? 'flex items-center p-2 pl-3 text-purple-600 font-medium rounded-md bg-purple-25 border-l-2 border-purple-400' 
-                      : 'flex items-center p-2 pl-3 text-purple-900 hover:text-purple-600 hover:bg-purple-25 rounded-md transition-all duration-200'
+                      : 'flex items-center p-2 pl-3 text-sky-900 hover:text-purple-600 hover:bg-purple-25 rounded-md transition-all duration-200'
                   }
                   onClick={toggleSidebar}
                 >
@@ -183,19 +197,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
               <FaTags className="mr-4 text-xl text-pink-500" style={{ minWidth: '20px' }} />
               <span className="text-base font-medium">Brands</span>
             </NavLink>
+
             <NavLink
-                to="/admin/currencies"
-                className={({ isActive }) =>
-                  isActive 
-                    ? 'flex items-center p-3 text-green-600 font-semibold rounded-lg bg-green-50 border border-green-200' 
-                    : 'flex items-center p-3 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200'
-                }
-                onClick={toggleSidebar}
-              >
-                <FaDollarSign className="mr-4 text-xl text-green-500" style={{ minWidth: '20px' }} />
-                <span className="text-base font-medium">Currencies</span>
-              </NavLink>
-                          
+              to="/admin/currencies"
+              className={({ isActive }) =>
+                isActive 
+                  ? 'flex items-center p-3 text-green-600 font-semibold rounded-lg bg-green-50 border border-green-200' 
+                  : 'flex items-center p-3 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200'
+              }
+              onClick={toggleSidebar}
+            >
+              <FaDollarSign className="mr-4 text-xl text-green-500" style={{ minWidth: '20px' }} />
+              <span className="text-base font-medium">Currencies</span>
+            </NavLink>
 
             <NavLink
               to="/admin/customers"
@@ -260,6 +274,45 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isSidebarOpen, toggleSideba
             >
               <FaListAlt className="mr-4 text-xl text-indigo-500" style={{ minWidth: '20px' }} />
               <span className="text-base font-medium">Orders</span>
+            </NavLink>
+
+            <NavLink
+              to="/admin/page"
+              className={({ isActive }) =>
+                isActive 
+                  ? 'flex items-center p-3 text-cyan-600 font-semibold rounded-lg bg-cyan-50 border border-cyan-200' 
+                  : 'flex items-center p-3 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200'
+              }
+              onClick={toggleSidebar}
+            >
+              <FaAtom className="mr-4 text-xl text-blue-700" style={{ minWidth: '20px' }} />
+              <span className="text-base font-medium">Pages</span>
+            </NavLink>
+
+            <NavLink
+              to="/admin/banner"
+              className={({ isActive }) =>
+                isActive 
+                  ? 'flex items-center p-3 text-orange-600 font-semibold rounded-lg bg-orange-50 border border-orange-200' 
+                  : 'flex items-center p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-200'
+              }
+              onClick={toggleSidebar}
+            >
+              <FaBullhorn className="mr-4 text-xl text-orange-500" style={{ minWidth: '20px' }} />
+              <span className="text-base font-medium">Banner</span>
+            </NavLink>
+
+            <NavLink
+              to="/admin/setting"
+              className={({ isActive }) =>
+                isActive 
+                  ? 'flex items-center p-3 text-slate-600 font-semibold rounded-lg bg-slate-50 border border-slate-200' 
+                  : 'flex items-center p-3 text-gray-700 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all duration-200'
+              }
+              onClick={toggleSidebar}
+            >
+              <FaSellcast className="mr-4 text-xl text-slate-500" style={{ minWidth: '20px' }} />
+              <span className="text-base font-medium">Settings</span>
             </NavLink>
           </div>
         </nav>

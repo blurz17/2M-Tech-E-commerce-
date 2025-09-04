@@ -15,4 +15,3 @@ export const useHeaderScroll = () => {
   return isScrolled;
 };
 
-// client\src\components\common\header\hooks\useHeaderScroll.ts

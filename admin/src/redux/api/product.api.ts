@@ -1,4 +1,4 @@
-// client/src/redux/api/product.api.ts
+// admin/src/redux/api/product.api.ts
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
     CategoriesResponse,
@@ -25,12 +25,12 @@ export const productApi = createApi({
     tagTypes: ['Product'],
     endpoints: (builder) => ({
         latestProducts: builder.query<ProductResponse, { limit?: number }>({
-            query: ({ limit = 20 } = {}) => `/latest?limit=${limit}`,
+            query: ({ limit = 20 } = {}) => `/latest?limit=${limit}&includeUnpublished=true`,
             providesTags: ['Product']
         }),
         allProducts: builder.query<ProductResponse, ProductRequest>({
             query: ({ page, limit, sortBy, category, brand }) => {
-                let url = `all?page=${page}&limit=${limit}`;
+                let url = `all?page=${page}&limit=${limit}&includeUnpublished=true`;
                 
                 if (sortBy) {
                     url += `&sortBy=${JSON.stringify(sortBy)}`;
@@ -54,7 +54,7 @@ export const productApi = createApi({
         }),
         searchProducts: builder.query<SearchProductResponse, SearchProductRequest>({
             query: ({ price, search, sort, category, brand, page }) => {
-                let base = `/search?search=${search}&page=${page}`;
+                let base = `/search?search=${search}&page=${page}&includeUnpublished=true`;
                 if (price) base += `&price=${price}`;
                 if (sort) base += `&sort=${sort}`;
                 if (category) base += `&category=${category}`;
@@ -91,7 +91,7 @@ export const productApi = createApi({
             invalidatesTags: ['Product'],
         }),
         getAllFeaturedProducts: builder.query<ProductResponse, string>({
-            query: () => 'featured',
+            query: () => 'featured?includeUnpublished=true',
             providesTags: ['Product']
         }),
         featureProduct: builder.mutation<MessageResponse, FeatureProductRequest>({
@@ -102,11 +102,11 @@ export const productApi = createApi({
             invalidatesTags: ['Product']
         }),
         productsByCategory: builder.query<ProductResponse, { category: string; limit?: number }>({
-            query: ({ category, limit = 8 }) => `/category/${category}?limit=${limit}`,
+            query: ({ category, limit = 8 }) => `/category/${category}?limit=${limit}&includeUnpublished=true`,
             providesTags: ['Product']
         }),
         productsByBrand: builder.query<ProductResponse, { brandId: string; limit?: number }>({
-            query: ({ brandId, limit = 8 }) => `/brand/${brandId}?limit=${limit}`,
+            query: ({ brandId, limit = 8 }) => `/brand/${brandId}?limit=${limit}&includeUnpublished=true`,
             providesTags: ['Product']
         }),
     }),

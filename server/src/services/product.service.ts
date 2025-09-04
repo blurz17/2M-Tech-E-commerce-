@@ -31,8 +31,8 @@ export class ProductService {
             throw new ApiError(400, "Please upload at least one photo");
         }
 
-        if (files.length > 5) {
-            throw new ApiError(400, "Maximum 5 images allowed");
+        if (files.length > 10) {
+            throw new ApiError(400, "Maximum 10 images allowed");
         }
 
         const photosData: { url: string; publicId: string }[] = [];

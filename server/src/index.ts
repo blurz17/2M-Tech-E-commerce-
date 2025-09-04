@@ -27,7 +27,10 @@ import telegramRoutes from './routes/telegram.routes';
 import categoryRoutes from './routes/category.routes';
 import brandRoutes from './routes/brand.routes';
 import currencyRoutes from './routes/currency.routes';
-
+import pageRoutes from './routes/page.routes';
+import settingsRoutes from './routes/settings.routes';
+import shippingTierRoutes from './routes/shippingTier.routes';
+import bannerRoutes from './routes/banner.routes';
 // Initialize Firebase
 try {
   firebaseApp.firestore();
@@ -63,6 +66,8 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:5174',
+            'http://localhost:5175',
+
       process.env.CLIENT_URL,
     ].filter(Boolean);
     
@@ -161,7 +166,11 @@ app.use('/api/v1/categories', categoryRoutes); // Move this with other routes
 app.use('/api/v1/brands', brandRoutes);
 app.use('/api/v1/subcategory',subcategoryRoutes);
 app.use('/api/v1/currencies', currencyRoutes);
-// Handle 404 for API routes
+app.use('/api/v1/pages', pageRoutes);
+app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/shippingTiers', shippingTierRoutes);
+app.use('/api/v1/banners', bannerRoutes);
+
 app.use('/api/*', (req: Request, res: Response) => {
   res.status(404).json({
     success: false,

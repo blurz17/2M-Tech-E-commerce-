@@ -1,3 +1,4 @@
+// admin/src/components/admin/AddProduct/AddProduct.tsx
 import { useNewProductMutation } from '../../../redux/api/product.api';
 import { useGetAllCategoriesQuery } from '../../../redux/api/category.api';
 import { useGetAllSubcategoriesQuery } from '../../../redux/api/subcategory.api';
@@ -25,6 +26,7 @@ const AddProduct: React.FC = () => {
     handleCategoryChange, 
     handleSubcategoryChange,
     handleDescriptionChange,
+    handleStatusChange, // Add this
     resetForm 
   } = useProductForm();
   
@@ -88,7 +90,8 @@ const AddProduct: React.FC = () => {
     submitFormData.append('description', data.description.trim());
     submitFormData.append('stock', data.stock.toString());
     submitFormData.append('price', data.price.toString());
-    submitFormData.append('discount', data.discount.toString()); // Add discount to form data
+    submitFormData.append('discount', data.discount.toString());
+    submitFormData.append('status', data.status.toString());
     submitFormData.append('mainPhotoIndex', mainPhotoIndex.toString());
 
     photos.forEach(photo => {
@@ -149,6 +152,7 @@ const AddProduct: React.FC = () => {
           onCategoryChange={handleCategoryChange}
           onSubcategoryChange={handleSubcategoryChange}
           onDescriptionChange={handleDescriptionChange}
+          onStatusChange={handleStatusChange} // Add this
           onImageChange={handleImageChange}
           onSubmit={handleSubmit}
         />
@@ -158,5 +162,3 @@ const AddProduct: React.FC = () => {
 };
 
 export default AddProduct;
-
-

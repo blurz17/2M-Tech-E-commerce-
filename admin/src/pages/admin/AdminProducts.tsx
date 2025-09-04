@@ -1,10 +1,10 @@
 import Papa from 'papaparse';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FaArrowDown, FaArrowUp, FaEdit, FaFileCsv, FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaEdit, FaFileCsv, FaPlus, FaChevronLeft, FaChevronRight, FaSearch, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Cell, Column, Row, useSortBy, useTable } from 'react-table';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
-import { useAllProductsQuery } from '../../redux/api/product.api';
+import { useAllProductsQuery, useSearchProductsQuery } from '../../redux/api/product.api';
 import { CustomError, Product } from '../../types/api-types';
 import { notify } from '../../utils/util';
 
@@ -131,9 +131,47 @@ const ProfessionalPagination: React.FC<{
 const AdminProducts: React.FC = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [limit] = useState(20); // Changed to 20 products per page
+  const [limit] = useState(20);
   const [sortBy, setSortBy] = useState<{ id: string; desc: boolean }>({ id: '', desc: false });
-  const { data: productsData, isLoading, isError, error, refetch } = useAllProductsQuery({ page, limit, sortBy });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Use search query when searching, otherwise use regular products query
+  const searchQuery = useSearchProductsQuery({
+    search: searchTerm,
+    page: page,
+    price: '',
+    category: '',
+    sort: ''
+  }, {
+    skip: !isSearching
+  });
+
+  const productsQuery = useAllProductsQuery({ 
+    page, 
+    limit, 
+    sortBy 
+  }, {
+    skip: isSearching
+  });
+
+  // Determine which query data to use
+  const currentQuery = isSearching ? searchQuery : productsQuery;
+  const { data: queryData, isLoading, isError, error, refetch } = currentQuery;
+
+  // Transform search data to match products data structure
+  const productsData = useMemo(() => {
+    if (isSearching && searchQuery.data) {
+      return {
+        products: searchQuery.data.products,
+        totalPages: searchQuery.data.totalPage,
+        currentPage: page,
+        totalProducts: searchQuery.data.totalProducts
+      };
+    }
+    return queryData;
+  }, [isSearching, searchQuery.data, queryData, page]);
+
   const [data, setData] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -148,6 +186,24 @@ const AdminProducts: React.FC = () => {
       notify(err.data.message, 'error');
     }
   }, [isError, error]);
+
+  // Handle search
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (term.trim()) {
+      setIsSearching(true);
+      setPage(1); // Reset to first page when searching
+    } else {
+      setIsSearching(false);
+    }
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchTerm('');
+    setIsSearching(false);
+    setPage(1);
+  };
 
   const columns = useMemo<Column<Product>[]>(
     () => [
@@ -176,12 +232,37 @@ const AdminProducts: React.FC = () => {
             )}
           </div>
         ),
-        disableSortBy: true,
       },
       { Header: 'Product', accessor: 'name' },
-      { Header: 'Category', accessor: 'category' },
+      { 
+  Header: 'Categories', 
+  accessor: 'categories',
+  Cell: ({ value }: { value: Array<{_id: string, name: string} | string> }) => (
+    <span className="text-sm">
+      {value && value.length > 0 
+        ? value.map(category => 
+            typeof category === 'string' ? category : category.name
+          ).join(', ') 
+        : 'No categories'
+      }
+    </span>
+  )
+},
       { Header: 'Stock', accessor: 'stock' },
       { Header: 'Price', accessor: 'price' },
+      {
+        Header: 'Status',
+        accessor: 'status',
+        Cell: ({ value }: { value: boolean }) => (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            value 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {value ? 'Published' : 'Unpublished'}
+          </span>
+        ),
+      },
       {
         Header: 'Actions',
         Cell: ({ row }: { row: Row<Product> }) => (
@@ -193,7 +274,6 @@ const AdminProducts: React.FC = () => {
             <span className="hidden sm:inline">Manage</span>
           </button>
         ),
-        disableSortBy: true,
       },
     ],
     [navigate]
@@ -208,6 +288,8 @@ const AdminProducts: React.FC = () => {
   } = useTable<Product>({ columns, data }, useSortBy);
 
   const handleSort = (columnId: string) => {
+    if (isSearching) return; // Disable sorting when searching
+    
     setSortBy((prevSortBy) => {
       if (prevSortBy.id === columnId) {
         return { id: columnId, desc: !prevSortBy.desc };
@@ -219,7 +301,6 @@ const AdminProducts: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    // Smooth scroll to top on page change
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -232,7 +313,8 @@ const AdminProducts: React.FC = () => {
       ...product,
       photos: product.photos?.join('; ') || '',
       mainPhoto: product.photos?.[0] || '',
-      totalPhotos: product.photos?.length || 0
+      totalPhotos: product.photos?.length || 0,
+      categories: product.categories?.join(', ') || '',
     }));
     
     const csv = Papa.unparse(csvData);
@@ -272,7 +354,8 @@ const AdminProducts: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-gray-900">Products</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Manage your product inventory ({productsData?.totalPages ? productsData.totalPages * 20 : 0} total products)
+            Manage your product inventory ({productsData?.totalProducts || 0} total products)
+            {isSearching && ` • Searching for "${searchTerm}"`}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -291,10 +374,60 @@ const AdminProducts: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FaSearch className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              <FaTimes className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {isSearching && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+              Found {data.length} products
+            </span>
+            <button
+              onClick={clearSearch}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
+      </div>
+
       {data.length === 0 ? (
         <div className="text-center text-gray-500 py-12">
           <div className="text-4xl mb-4">📦</div>
-          <p>No products available.</p>
+          <p>
+            {isSearching 
+              ? `No products found for "${searchTerm}"`
+              : "No products available."
+            }
+          </p>
+          {isSearching && (
+            <button
+              onClick={clearSearch}
+              className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
+            >
+              View all products
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -310,20 +443,21 @@ const AdminProducts: React.FC = () => {
                         const headerProps = column.getHeaderProps(
                           (column as any).getSortByToggleProps ? (column as any).getSortByToggleProps() : {}
                         );
+                        const canSort = column.id !== 'photos' && column.id !== 'Actions' && !isSearching;
                         return (
                           <th
                             key={columnIndex}
                             {...headerProps}
-                            className={`p-4 border-b border-gray-200 cursor-pointer font-semibold text-gray-900 ${
+                            className={`p-4 border-b border-gray-200 ${canSort ? 'cursor-pointer' : ''} font-semibold text-gray-900 ${
                               (column as any).isSorted ? 'bg-blue-50' : ''
                             }`}
                             onClick={() => 
-                              !(column as any).disableSortBy && handleSort(column.id)
+                              canSort && handleSort(column.id)
                             }
                           >
                             <div className="flex items-center">
                               {column.render('Header')}
-                              {(column as any).isSorted ? (
+                              {!isSearching && (column as any).isSorted ? (
                                 (column as any).isSortedDesc ? (
                                   <FaArrowDown className="ml-2 text-blue-600" />
                                 ) : (
@@ -393,7 +527,9 @@ const AdminProducts: React.FC = () => {
                     {/* Product Details */}
                     <div className="flex-grow min-w-0">
                       <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">Category: {product.category}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Categories: {product.categories && product.categories.length > 0 ? product.categories.join(', ') : 'No categories'}
+                      </p>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex space-x-4 text-sm">
                           <span className="text-gray-600">Stock: <span className="font-medium">{product.stock}</span></span>

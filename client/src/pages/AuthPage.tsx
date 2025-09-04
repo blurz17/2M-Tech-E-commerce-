@@ -3,18 +3,20 @@ import Login from '../components/auth/Login';
 import Signup from '../components/auth/Signup';
 import Lottie from 'lottie-react';
 import { motion } from 'framer-motion';
+import { useConstants } from '../hooks/useConstants';
 // Import your animation files - adjust paths as needed
 import ecommerceAnimation from '../assets/ecommerce-animation.json'; // Replace with your actual animation file
 
 const AuthPage: React.FC = () => {
   // Changed default to true to show Sign Up first
   const [isSignUp, setIsSignUp] = useState(true);
+  const { constants, isLoading } = useConstants();
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-gray-50">
       <div className="flex w-full max-w-5xl bg-white shadow-2xl rounded-2xl overflow-hidden">
         {/* Left Side - Lottie Animation */}
-        <div className="hidden md:flex flex-col md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+        <div className="hidden md:flex flex-col md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
           <div className="w-full max-w-md px-8">
             <Lottie 
               animationData={ecommerceAnimation} 
@@ -24,7 +26,7 @@ const AuthPage: React.FC = () => {
             />
             <div className="text-center mt-8">
               <h2 className="text-2xl font-bold text-white mb-3">
-                Welcome to 2M Technology
+                {isLoading ? 'Loading...' : `Welcome to ${constants.companyName}`}
               </h2>
               <p className="text-gray-300 text-sm leading-relaxed">
                 Discover amazing products and enjoy a seamless shopping experience with us.
@@ -33,7 +35,7 @@ const AuthPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Right Side - Form */}
+        {/* Right Side - Login Form */}
         <div className="w-full md:w-1/2 p-8 lg:p-12">
           {/* Logo Section */}
           <div className="text-center mb-8">
@@ -43,7 +45,7 @@ const AuthPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              2M Technology
+              {isLoading ? 'Loading...' : constants.companyName}
             </motion.h1>
             <motion.p 
               className="text-gray-600 text-sm lg:text-base"
@@ -105,11 +107,11 @@ const AuthPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
               By continuing, you agree to our{' '}
-              <a href="/terms" className="text-blue-600 hover:underline">
+              <a href="/pages/term" className="text-blue-600 hover:underline">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="/privacy" className="text-blue-600 hover:underline">
+              <a href="/pages/privacy-policy" className="text-blue-600 hover:underline">
                 Privacy Policy
               </a>
             </p>

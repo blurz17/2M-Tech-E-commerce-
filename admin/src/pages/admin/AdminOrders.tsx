@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAllOrdersQuery } from '../../redux/api/order.api';
-import { Order } from '../../types/api-types'; // Adjust the import path according to your project structure
+import { Order } from '../../types/api-types';
 import BackButton from '../../components/common/BackBtn';
+import { useConstants } from '../../hooks/useConstants';
 
 const AdminOrders: React.FC = () => {
-    const { data, isLoading, isError } = useAllOrdersQuery('');
+    const { data, isLoading: ordersLoading, isError: ordersError } = useAllOrdersQuery('');
+    const { currencySymbol, isLoading: constantsLoading } = useConstants();
     const [orders, setOrders] = useState<Order[]>([]);
     const navigate = useNavigate();
 
@@ -14,6 +16,10 @@ const AdminOrders: React.FC = () => {
             setOrders(data.orders);
         }
     }, [data]);
+
+    // Combine loading states
+    const isLoading = ordersLoading || constantsLoading;
+    const isError = ordersError;
 
     if (isLoading) return <p>Loading orders...</p>;
     if (isError) return <p>Error loading orders</p>;
@@ -46,9 +52,22 @@ const AdminOrders: React.FC = () => {
                                 {orders.map((order) => (
                                     <tr key={order._id} className="hover:bg-gray-50">
                                         <td className="py-3 px-4 border-b border-gray-300 text-sm">{order._id}</td>
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">{order.user.name}</td>
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">EGP {order.total}</td>
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">{order.status}</td>
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">
+                                            {order.user && order.user.name ? order.user.name : 'Unknown Customer'}
+                                        </td>
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm font-semibold">
+                                            {currencySymbol}{order.total}
+                                        </td>
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                                {order.status}
+                                            </span>
+                                        </td>
                                         <td className="py-3 px-4 border-b border-gray-300 text-sm">
                                             <button
                                                 onClick={() => handleViewDetails(order._id)}

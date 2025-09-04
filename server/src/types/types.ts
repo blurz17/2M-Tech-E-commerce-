@@ -1,5 +1,5 @@
+
 import { Request } from 'express';
-import { Document } from 'mongoose';
 
 export interface NewProductBody {
     name: string;
@@ -10,7 +10,7 @@ export interface NewProductBody {
     stock: number;
     description: string;
     discount?: number; // Added discount field
-
+    status?: boolean; // NEW: Published status (default: true)
 }
 
 export interface BaseQueryType {
@@ -22,6 +22,7 @@ export interface BaseQueryType {
         $gte?: number;
         $lte?: number;
     };
+    status?: boolean; // NEW: Status filter
 }
 
 export interface SearchProductsQuery {
@@ -32,6 +33,7 @@ export interface SearchProductsQuery {
     sort?: 'asc' | 'desc' | 'relevance';    
     price?: string; // Assuming price is in the format "min,max"
     page?: string;
+    includeUnpublished?: string;
 }
 
 export interface User {

@@ -269,16 +269,7 @@ const LoginPage: React.FC = () => {
                     </button>
                 </motion.div>
 
-                <div className="mt-4 text-center">
-                    <motion.a
-                        href="/forgot-password"
-                        className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                        whileHover={{ x: 2 }}
-                        whileTap={{ scale: 1.05 }}
-                    >
-                        Forgot Password?
-                    </motion.a>
-                </div>
+            
             </div>
         </div>
     );

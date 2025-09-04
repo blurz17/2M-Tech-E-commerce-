@@ -1,13 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { incrementCartItem, decrementCartItem, removeCartItem, calculatePrice, resetCart, discountApplied } from '../redux/reducers/cart.reducer';
+import { 
+    incrementCartItem, 
+    decrementCartItem, 
+    removeCartItem, 
+    calculatePrice, 
+    resetCart, 
+    discountApplied,
+    updateShippingCharges 
+} from '../redux/reducers/cart.reducer';
 import { useApplyCouponMutation } from '../redux/api/coupon.api';
+import { useCalculateShippingCostQuery } from '../redux/api/shippingTier.api';
 import { Link } from 'react-router-dom';
 import BackButton from '../components/common/BackBtn';
+import { notify } from '../utils/util';
+import { useConstants } from '../hooks/useConstants';
 
 const Cart: React.FC = () => {
   const dispatch = useDispatch();
+  const { currencySymbol } = useConstants();
   const cartState = useSelector((state: RootState) => state.cart);
   
   // Ensure cartItems is always an array with safe fallback
@@ -18,6 +30,28 @@ const Cart: React.FC = () => {
   const [appliedCoupon, setAppliedCoupon] = useState('');
 
   const [applyCoupon, { isLoading: isApplyingCoupon }] = useApplyCouponMutation();
+
+  // Calculate shipping cost dynamically based on subtotal
+  const { 
+    data: shippingData, 
+    isLoading: isCalculatingShipping,
+    error: shippingError
+  } = useCalculateShippingCostQuery(subTotal, {
+    skip: subTotal === 0 // Skip API call if cart is empty
+  });
+
+  // Update shipping charges when shipping data is available
+  useEffect(() => {
+    if (shippingData?.success && shippingData.shippingCost !== undefined) {
+      dispatch(updateShippingCharges(shippingData.shippingCost));
+    } else if (subTotal === 0) {
+      // If cart is empty, set shipping to 0
+      dispatch(updateShippingCharges(0));
+    } else if (shippingError) {
+      // Fallback to default shipping cost if API fails
+      dispatch(updateShippingCharges(50));
+    }
+  }, [shippingData, shippingError, subTotal, dispatch]);
 
   useEffect(() => {
     dispatch(calculatePrice());
@@ -41,7 +75,7 @@ const Cart: React.FC = () => {
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
-      alert('Please enter a coupon code');
+      notify('Please enter a coupon code', null);
       return;
     }
 
@@ -52,7 +86,7 @@ const Cart: React.FC = () => {
       setCouponCode('');
     } catch (error: any) {
       const errorMessage = error?.data?.message || 'Failed to apply coupon';
-      alert(errorMessage);
+      notify(errorMessage, null);
     }
   };
 
@@ -78,6 +112,14 @@ const Cart: React.FC = () => {
       </div>
     );
   }
+
+  // Function to get shipping tier info for display
+  const getShippingTierInfo = () => {
+    if (!shippingData?.appliedTier) return null;
+    
+    const tier = shippingData.appliedTier;
+    return `${currencySymbol}${tier.minOrderValue} - ${currencySymbol}${tier.maxOrderValue}`;
+  };
 
   return (
     <div className="container mx-auto mt-20 mb-8 p-4 bg-white rounded-lg shadow-md">
@@ -134,7 +176,7 @@ const Cart: React.FC = () => {
                             </div>
                           </Link>
                         </td>
-                        <td className="p-4">EGP {(item.price || 0).toFixed(2)}</td>
+                        <td className="p-4">{currencySymbol} {(item.price || 0).toFixed(2)}</td>
                         <td className="p-4">
                           <div className="flex items-center space-x-2">
                             <button
@@ -157,7 +199,7 @@ const Cart: React.FC = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="p-4">EGP {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>
+                        <td className="p-4">{currencySymbol} {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>
                         <td className="p-4">
                           <button
                             onClick={() => handleRemove(item.productId)}
@@ -197,25 +239,38 @@ const Cart: React.FC = () => {
             <h2 className="font-bold text-lg mb-4">Cart total</h2>
             <div className="flex justify-between mb-4">
               <span>Subtotal</span>
-              <span>EGP {(subTotal || 0).toFixed(2)}</span>
+              <span>{currencySymbol} {(subTotal || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between mb-4">
               <span>Tax</span>
-              <span>EGP {(tax || 0).toFixed(2)}</span>
+              <span>{currencySymbol} {(tax || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between mb-4">
-              <span>Shipping</span>
-              <span>EGP {(shippingCharges || 0).toFixed(2)}</span>
+              <div className="flex flex-col">
+                <span>Shipping</span>
+                {isCalculatingShipping && (
+                  <span className="text-xs text-gray-500">Calculating...</span>
+                )}
+                {shippingData?.appliedTier && (
+                  <span className="text-xs text-gray-500">
+                    Range: {getShippingTierInfo()}
+                  </span>
+                )}
+                {!shippingData?.appliedTier && !isCalculatingShipping && subTotal > 0 && (
+                  <span className="text-xs text-red-500">Default rate applied</span>
+                )}
+              </div>
+              <span>{currencySymbol} {(shippingCharges || 0).toFixed(2)}</span>
             </div>
             {(discount || 0) > 0 && (
               <div className="flex justify-between mb-4">
                 <span>Discount</span>
-                <span>EGP {(discount || 0).toFixed(2)}</span>
+                <span className="text-green-600">-{currencySymbol} {(discount || 0).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between mb-4 font-bold">
               <span>Total amount</span>
-              <span>EGP {Math.max(0, (total || 0) - (discount || 0)).toFixed(2)}</span>
+              <span>{currencySymbol} {Math.max(0, (total || 0)).toFixed(2)}</span>
             </div>
 
             <div className="flex flex-col md:flex-row mb-4 space-y-2 md:space-y-0 md:space-x-2">

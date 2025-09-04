@@ -1,19 +1,28 @@
-import { Request, Response, Router } from 'express';
-import { getAllUsers, getMe, getUser, login, logoutUser, signup } from '../controllers/auth.controller';
-import { adminOnly, authenticateUser } from '../middleware/auth.middleware';
+import express from 'express';
+import { 
+    login, 
+    signup, 
+    getMe, 
+    updateProfile, 
+    logoutUser, 
+    getAllUsers, 
+    getUser 
+} from '../controllers/auth.controller';
+import { authenticateUser } from '../middleware/auth.middleware';
+import { uploadImage } from '../utils/cloudinary';
 
-const router = Router();
+const router = express.Router();
 
 // Public routes
 router.post('/login', login);
-router.post('/logout', logoutUser); // Assuming logout might not require authentication
 router.post('/signup', signup);
 
-// Authenticated user routes
+// Protected routes
 router.get('/me', authenticateUser, getMe);
+router.put('/update-profile', authenticateUser, uploadImage('photo'), updateProfile);
+router.post('/logout', logoutUser);
 
-// Admin-only routes
-router.get('/all', authenticateUser, adminOnly, getAllUsers);
-router.get('/:id', authenticateUser, adminOnly, getUser);
+router.get('/all', authenticateUser, getAllUsers);
+router.get('/:id', authenticateUser, getUser);
 
 export default router;

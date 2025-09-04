@@ -94,11 +94,12 @@ export interface DeleteBrandRequest {
     brandId: string;
 }
 
-// Product - Updated with brand field as object reference
+
 export interface Product {
     name: string;
     _id: string;
-    category: string;
+    categories: string[]; // Changed from 'category: string' to 'categories: string[]'
+    subcategories: string[]; // Added subcategories array
     brand: {
         _id: string;
         name: string;
@@ -108,13 +109,14 @@ export interface Product {
     photos: string[];
     photoPublicIds: string[];
     price: number;
-    discount : Number;
-    netPrice: number; // And this too
-
+    discount: number;
+    netPrice: number;
     description: string;
     featured: boolean;
     createdAt: string;
     updatedAt: string;
+        status: boolean; // NEW: Published status
+
 }
 
 export interface ProductResponse {

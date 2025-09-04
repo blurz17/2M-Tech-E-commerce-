@@ -76,9 +76,10 @@ export interface BrandDetailResponse {
     brand: Brand;
 }
 
+// Update your BrandsDropdownResponse interface in api-types.ts
 export interface BrandsDropdownResponse {
     success: boolean;
-    brands: { _id: string; name: string }[];
+    brands: { _id: string; name: string; image: string }[]; // Added image property
 }
 
 export interface NewBrandRequest {
@@ -98,7 +99,11 @@ export interface DeleteBrandRequest {
 export interface Product {
     name: string;
     _id: string;
-    category: string;
+   category: string | { _id: string; name: string; value: string };
+  categories?: Array<string | { _id: string; name: string; value: string }>;
+  
+  subcategory?: string | { _id: string; name: string; value: string };
+  subcategories?: Array<string | { _id: string; name: string; value: string }>;
     brand: {
         _id: string;
         name: string;
@@ -108,10 +113,14 @@ export interface Product {
     photos: string[];
     photoPublicIds: string[];
     price: number;
+
     description: string;
     featured: boolean;
     createdAt: string;
     updatedAt: string;
+    currencySymbol:string;
+    discount: number;
+    netPrice:number;
 }
 
 export interface ProductResponse {
@@ -177,6 +186,7 @@ export type SearchProductRequest = {
     brand?: string; // Added brand search parameter
     search: string;
     sort: string;
+    
 }
 
 export type SearchProductResponse = ProductResponse & {

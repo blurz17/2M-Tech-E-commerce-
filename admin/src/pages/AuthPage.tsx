@@ -2,15 +2,18 @@ import React from 'react';
 import Login from '../components/auth/Login';
 import Lottie from 'lottie-react';
 import { motion } from 'framer-motion';
-// Import your animation files - adjust paths as needed
+import { useConstants } from '../hooks/useConstants';
+
 import ecommerceAnimation from '../assets/ecommerce-animation.json'; // Replace with your actual animation file
 
 const AuthPage: React.FC = () => {
+  const { constants, isLoading } = useConstants();
+
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-gray-50">
       <div className="flex w-full max-w-5xl bg-white shadow-2xl rounded-2xl overflow-hidden">
         {/* Left Side - Lottie Animation */}
-        <div className="hidden md:flex flex-col md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+        <div className="hidden md:flex flex-col md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
           <div className="w-full max-w-md px-8">
             <Lottie 
               animationData={ecommerceAnimation} 
@@ -20,7 +23,7 @@ const AuthPage: React.FC = () => {
             />
             <div className="text-center mt-8">
               <h2 className="text-2xl font-bold text-white mb-3">
-                2M Technology Admin
+                {isLoading ? 'Loading...' : `${constants.companyName} Admin`}
               </h2>
               <p className="text-gray-300 text-sm leading-relaxed">
                 Secure admin portal for managing your ecommerce platform.
@@ -39,7 +42,7 @@ const AuthPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              2M Technology
+              {isLoading ? 'Loading...' : constants.companyName}
             </motion.h1>
             <motion.p 
               className="text-gray-600 text-sm lg:text-base"
@@ -76,25 +79,15 @@ const AuthPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Support Contact */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Need help accessing your account?{' '}
-              <a href="mailto:admin@2mtechnology.com" className="text-blue-600 hover:underline">
-                Contact IT Support
-              </a>
-            </p>
-          </div>
-
           {/* Additional Info */}
           <div className="mt-4 text-center">
             <p className="text-xs text-gray-500">
               By signing in, you agree to our{' '}
-              <a href="/terms" className="text-blue-600 hover:underline">
+              <a href="/pages/term" className="text-blue-600 hover:underline">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="/privacy" className="text-blue-600 hover:underline">
+              <a href="/pages/privacy-policy" className="text-blue-600 hover:underline">
                 Privacy Policy
               </a>
             </p>

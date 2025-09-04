@@ -33,7 +33,9 @@ const BrandManagement = lazy(() => import('./components/admin/BrandManagement'))
 const SubCategoryManagement = lazy(() => import('./components/admin/SubcategoryManagement'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
 const CurrencyManagement = lazy(() => import('./components/admin/CurrencyManagement'));
-
+const PageManagement = lazy(() => import('./components/admin/PageManagement'));
+const SettingMangmet = lazy(()=>import('./pages/admin/AdminSettings'));
+const BannerManagement =  lazy(()=>import('./components/admin/BannerManagement'));
 const App: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { data, error } = useGetMeQuery();
@@ -90,6 +92,11 @@ const App: React.FC = () => {
                                     <Route path="categories" element={<CategoryManagement />} />
                                     <Route path="subcategories" element={<SubCategoryManagement />} />
                                     <Route path="currencies" element={<CurrencyManagement />} />
+                                    <Route path="page" element={<PageManagement />} />
+                                     <Route path="setting" element={<SettingMangmet />} />
+                                      <Route path="banner" element={<BannerManagement />} />
+
+
                                 </Route>
                             </Route>
 

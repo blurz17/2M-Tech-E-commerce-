@@ -164,3 +164,90 @@ export const getUser = asyncHandler(async (req, res) => {
         user,
     });
 });
+export const updateProfile = asyncHandler(async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
+        const { name, gender, dob } = req.body;
+        const userId = req.user._id;
+
+        // Prepare update data
+        const updateData: Partial<IUser> = {};
+
+        if (name && name.trim()) {
+            updateData.name = name.trim();
+        }
+
+        if (gender) {
+            updateData.gender = gender;
+        }
+
+        if (dob) {
+            updateData.dob = new Date(dob);
+        }
+
+        // Handle photo upload if file is present
+        if (req.file) {
+            // The cloudinary upload middleware should have already processed the file
+            // and attached the secure_url to req.file
+            if (req.file.path) {
+                updateData.photoURL = req.file.path; // Cloudinary URL
+            }
+        }
+
+        // Only update if there's something to update
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No valid fields to update'
+            });
+        }
+
+        // Update user in database
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: updateData },
+            { 
+                new: true, // Return updated document
+                runValidators: true // Run mongoose validators
+            }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error('Update profile error:', error);
+        
+        // Handle specific MongoDB validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map((err: any) => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});

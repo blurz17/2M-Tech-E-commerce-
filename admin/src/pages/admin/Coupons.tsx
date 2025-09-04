@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useGetAllCouponsQuery, useCreateCouponMutation, useDeleteCouponMutation } from '../../redux/api/coupon.api';
 import { notify } from '../../utils/util';
 import dayjs from 'dayjs';
-
+import { useConstants } from '../../hooks/useConstants';
 const AdminCoupons: React.FC = () => {
     const { data, refetch, isLoading: isFetchingCoupons, isError: fetchError } = useGetAllCouponsQuery();
     const [createCoupon] = useCreateCouponMutation();
     const [deleteCoupon] = useDeleteCouponMutation();
     const [code, setCode] = useState('');
     const [amount, setAmount] = useState<number | string>('');
+    const {currencySymbol} = useConstants();
 
     const handleCreateCoupon = async () => {
         if (!code || !amount) {
@@ -90,7 +91,7 @@ const AdminCoupons: React.FC = () => {
                                 {data?.coupons.map((coupon) => (
                                     <tr key={coupon._id} className="hover:bg-gray-50">
                                         <td className="py-3 px-4 border-b border-gray-300 text-sm">{coupon.code}</td>
-                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">EGP {coupon.amount.toFixed(2)}</td>
+                                        <td className="py-3 px-4 border-b border-gray-300 text-sm">{currencySymbol} {coupon.amount.toFixed(2)}</td>
                                         <td className="py-3 px-4 border-b border-gray-300 text-sm">{dayjs(coupon.createdAt).format('DD/MM/YYYY')
                                         }</td>
                                         <td className="py-3 px-4 border-b border-gray-300 text-sm">

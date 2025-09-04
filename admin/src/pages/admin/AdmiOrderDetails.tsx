@@ -3,10 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../../components/common/BackBtn';
 import { useDeleteOrderMutation, useOrderDetailsQuery, useUpdateOrderStatusMutation } from '../../redux/api/order.api';
 import { notify } from '../../utils/util';
+import { useConstants } from '../../hooks/useConstants';
 
 const AdminOrderDetails: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
     const { data, isLoading, isError, refetch } = useOrderDetailsQuery(orderId!);
+    const { currencySymbol } = useConstants();
     const [updateOrderStatus] = useUpdateOrderStatusMutation();
     const [deleteOrder] = useDeleteOrderMutation();
     const navigate = useNavigate();
@@ -87,8 +89,8 @@ const AdminOrderDetails: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="p-4">{item.quantity}</td>
-                                    <td className="p-4">EGP {item.price.toFixed(2)}</td>
-                                    <td className="p-4">EGP {(item.price * item.quantity).toFixed(2)}</td>
+                                    <td className="p-4">{currencySymbol} {item.price}</td>
+                                    <td className="p-4">{currencySymbol} {(item.price * item.quantity)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -101,23 +103,23 @@ const AdminOrderDetails: React.FC = () => {
                 <h3 className="text-xl font-semibold mb-4">Order Summary</h3>
                 <div className="flex justify-between mb-2">
                     <span>Subtotal</span>
-                    <span>EGP {order.subtotal.toFixed(2)}</span>
+                    <span>{currencySymbol} {order.subtotal}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                     <span>Tax</span>
-                    <span>EGP {order.tax.toFixed(2)}</span>
+                    <span>{currencySymbol} {order.tax}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                     <span>Shipping</span>
-                    <span>EGP {order.shippingCharges.toFixed(2)}</span>
+                    <span>{currencySymbol} {order.shippingCharges}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                     <span>Discount</span>
-                    <span>EGP {order.discount.toFixed(2)}</span>
+                    <span>{currencySymbol} {order.discount}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>EGP {order.total.toFixed(2)}</span>
+                    <span>{currencySymbol} {order.total}</span>
                 </div>
             </div>
 

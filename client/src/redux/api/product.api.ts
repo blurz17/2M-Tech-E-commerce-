@@ -81,10 +81,14 @@ export const productApi = createApi({
             }),
             invalidatesTags: ['Product']
         }),
-        productsByCategory: builder.query<ProductResponse, { category: string; limit?: number }>({
-            query: ({ category, limit = 8 }) => `/category/${category}?limit=${limit}`,
-            providesTags: ['Product']
-        }),
+       productsByCategory: builder.query<ProductResponse, { category: string; limit?: number }>({
+    query: ({ category, limit = 8 }) => {
+        console.log('API Query - Category:', category, 'Limit:', limit);
+        // Make sure category is properly encoded and matches the backend route
+        return `/category/${encodeURIComponent(category)}?limit=${limit}`;
+    },
+    providesTags: ['Product']
+}),
         productsByBrand: builder.query<ProductResponse, { brandId: string; limit?: number }>({
             query: ({ brandId, limit = 8 }) => `/brand/${brandId}?limit=${limit}`,
             providesTags: ['Product']
@@ -97,11 +101,10 @@ export const {
     useAllProductsQuery,
     useCategoriesQuery,
     useSearchProductsQuery,
-   
     useProductDetailsQuery,
-  
     useGetAllFeaturedProductsQuery,
     useFeatureProductMutation,
     useProductsByCategoryQuery,
     useProductsByBrandQuery
 } = productApi;
+

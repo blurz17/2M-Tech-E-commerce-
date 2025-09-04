@@ -13,7 +13,6 @@ import { adminOnly, authenticateUser } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-// Test endpoint - Add this for debugging Telegram
 router.get('/test-telegram', testTelegram);
 
 // Authenticated user routes
@@ -29,7 +28,3 @@ router.get('/:id', authenticateUser, getOrder);
 router.put('/update-status/:id', authenticateUser, adminOnly, updateOrderStatus);
 
 export default router;
-
-// ================================================================
-// client/src/redux/api/order.api.ts - Updated to fix the endpoint
-// ================================================================

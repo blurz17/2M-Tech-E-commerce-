@@ -1,3 +1,4 @@
+// admin/src/components/admin/AddProduct/components/form-sections/ProductDetails.tsx
 import React, { useMemo } from 'react';
 import { ProductFormData } from '../../types';
 import WysiwygEditor from '../../../../common/WysiwygEditor/WysiwygEditor';
@@ -6,12 +7,14 @@ interface ProductDetailsProps {
   formData: ProductFormData;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onDescriptionChange: (value: string) => void;
+  onStatusChange: (status: boolean) => void; // New prop
 }
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({
   formData,
   onInputChange,
-  onDescriptionChange
+  onDescriptionChange,
+  onStatusChange
 }) => {
   // Calculate net price based on price and discount
   const netPrice = useMemo(() => {
@@ -20,6 +23,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     }
     return formData.price;
   }, [formData.price, formData.discount]);
+
+  // Handle status toggle - now clean and simple
+  const handleStatusToggle = () => {
+    onStatusChange(!formData.status);
+  };
 
   return (
     <div>
@@ -74,7 +82,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
-              Price (EGP) <span className="text-red-500">*</span>
+              Price <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -88,9 +96,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                 placeholder="0.00"
                 required
               />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 font-semibold">
-                EGP
-              </div>
             </div>
           </div>
 
@@ -121,7 +126,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
-              Net Price (EGP)
+              Net Price 
             </label>
             <div className="relative">
               <input
@@ -131,13 +136,47 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                 disabled
                 readOnly
               />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 font-semibold">
-                EGP
-              </div>
             </div>
             <p className="text-xs text-gray-500">
               Final price after discount (calculated automatically)
             </p>
+          </div>
+        </div>
+
+        {/* Simplified Status Toggle */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-800">Publication Status</h3>
+              <p className="text-sm text-gray-600">
+                Control whether this product is visible to customers
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center cursor-pointer" onClick={handleStatusToggle}>
+                {/* Visual toggle switch */}
+                <div className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  formData.status ? 'bg-green-600' : 'bg-gray-200'
+                }`}>
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${
+                      formData.status ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </div>
+                <span className={`ml-3 text-sm font-medium ${
+                  formData.status ? 'text-green-700' : 'text-gray-500'
+                }`}>
+                  {formData.status ? 'Published' : 'Draft'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            {formData.status 
+              ? 'This product will be visible to customers on your store' 
+              : 'This product will be saved as a draft and hidden from customers'
+            }
           </div>
         </div>
 
@@ -148,20 +187,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Original Price:</span>
-                <span className="font-semibold text-gray-800">EGP {formData.price.toFixed(2)}</span>
+                <span className="font-semibold text-gray-800">${formData.price}</span>
               </div>
               {formData.discount > 0 && (
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Discount ({formData.discount}%):</span>
                     <span className="font-semibold text-red-600">
-                      -EGP {((formData.price * formData.discount) / 100).toFixed(2)}
+                      -${((formData.price * formData.discount) / 100)}
                     </span>
                   </div>
                   <div className="border-t border-blue-300 pt-2">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-800">Final Price:</span>
-                      <span className="text-lg font-bold text-green-600">EGP {netPrice.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-green-600">${netPrice}</span>
                     </div>
                   </div>
                 </>

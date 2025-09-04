@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import BackButton from '../components/common/BackBtn';
 import { useProductDetailsQuery } from '../redux/api/product.api';
 import { addToCart, decrementCartItem, incrementCartItem } from '../redux/reducers/cart.reducer';
 import { RootState } from '../redux/store';
-import { wysiwygStyles,ProductSkeleton } from '../components/common/filesRelatedProductDetails';
-
-
+import { wysiwygStyles, ProductSkeleton } from '../components/common/filesRelatedProductDetails';
+import RelatedProducts from '../components/RelatedProducts';
 
 const ErrorState: React.FC<{ onRetry?: () => void }> = ({ onRetry }) => (
     <div className="container mx-auto p-4 my-6">
@@ -45,139 +45,108 @@ const StockIndicator: React.FC<{ stock: number }> = ({ stock }) => {
     );
 };
 
-// Price display component
-const PriceDisplay: React.FC<{ price: number }> = ({ price }) => (
-    <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-gray-900">LE {price}</span>
-    </div>
-);
+// Simplified price display component
+const PriceDisplay: React.FC<{ 
+    originalPrice: number; 
+    netPrice: number; 
+    discount: number;
+    currencySymbol?: string;
+}> = ({ originalPrice, netPrice, discount, currencySymbol = 'LE' }) => {
+    const hasDiscount = discount > 0;
+    const finalPrice = netPrice || (originalPrice - (originalPrice * discount / 100));
+    const savingsAmount = originalPrice - finalPrice;
 
-// Brand display component
-const BrandDisplay: React.FC<{ brand: any }> = ({ brand }) => {
-    if (!brand) return null;
-    
-    const brandName = typeof brand === 'object' ? brand.name : brand;
-    const brandImage = typeof brand === 'object' ? brand.image : null;
-    
-    return (
-        <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Brand</span>
-            <div className="flex items-center gap-2">
-                {brandImage && (
-                    <img 
-                        src={brandImage} 
-                        alt={brandName}
-                        className="w-8 h-8 rounded-full object-cover"
-                    />
-                )}
-                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-                    {brandName}
-                </span>
-            </div>
-        </div>
-    );
-};
-
-// Categories display component
-const CategoriesDisplay: React.FC<{ categories: any[] }> = ({ categories }) => {
-    if (!categories || categories.length === 0) return null;
-    
-    return (
-        <div className="flex items-start gap-3">
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">
-                {categories.length > 1 ? 'Categories' : 'Category'}
-            </span>
-            <div className="flex flex-wrap gap-2">
-                {categories.map((category, index) => {
-                    const categoryName = typeof category === 'object' ? category.name : category;
-                    return (
-                        <span 
-                            key={index}
-                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                        >
-                            {categoryName}
-                        </span>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
-// Subcategories display component
-const SubcategoriesDisplay: React.FC<{ subcategories: any[] }> = ({ subcategories }) => {
-    if (!subcategories || subcategories.length === 0) return null;
-    
-    return (
-        <div className="flex items-start gap-3">
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">
-                {subcategories.length > 1 ? 'Subcategories' : 'Subcategory'}
-            </span>
-            <div className="flex flex-wrap gap-2">
-                {subcategories.map((subcategory, index) => {
-                    const subcategoryName = typeof subcategory === 'object' ? subcategory.name : subcategory;
-                    return (
-                        <span 
-                            key={index}
-                            className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
-                        >
-                            {subcategoryName}
-                        </span>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
-// Product info section component
-const ProductInfoSection: React.FC<{ product: any }> = ({ product }) => {
-    return (
-        <div className="space-y-4">
-            {/* Categories */}
-            <CategoriesDisplay categories={product.categories} />
-
-            {/* Brand */}
-            <BrandDisplay brand={product.brand} />
-
-            {/* Subcategories */}
-            <SubcategoriesDisplay subcategories={product.subcategories} />
-
-            {/* Featured badge */}
-            {product.featured && (
-                <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Status</span>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium flex items-center gap-1">
-                        ⭐ Featured Product
+    if (hasDiscount) {
+        return (
+            <div className="space-y-2">
+                {/* Discount Badge - Smaller and simpler */}
+                <div className="inline-block">
+                    <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold">
+                        -{discount}% OFF
                     </span>
+                </div>
+
+                {/* Price Section - Cleaner layout */}
+                <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold text-red-600">
+                        {currencySymbol} {finalPrice.toLocaleString()}
+                    </span>
+                    <span className="text-lg text-gray-500 line-through">
+                        {currencySymbol} {originalPrice.toLocaleString()}
+                    </span>
+                </div>
+
+                {/* Savings Amount - Simplified */}
+                <div className="text-green-600 font-medium">
+                    You save {currencySymbol} {savingsAmount.toLocaleString()}
+                </div>
+            </div>
+        );
+    }
+
+    // No discount - show regular price
+    return (
+        <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-gray-900">
+                {currencySymbol} {finalPrice.toLocaleString()}
+            </span>
+        </div>
+    );
+};
+
+// Simplified product info section - cleaner and less overwhelming
+const ProductInfoSection: React.FC<{ product: any }> = ({ product }) => {
+    const brandName = typeof product.brand === 'object' ? product.brand.name : product.brand;
+    const categoryName = product.categories && product.categories.length > 0 
+        ? (typeof product.categories[0] === 'object' ? product.categories[0].name : product.categories[0])
+        : null;
+
+    return (
+        <div className="space-y-3 text-sm">
+            {/* Category - Simple display */}
+            {categoryName && (
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-500 font-medium">Category:</span>
+                    <span className="text-gray-900">{categoryName}</span>
+                </div>
+            )}
+
+            {/* Brand - Simple display */}
+            {brandName && (
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-500 font-medium">Brand:</span>
+                    <span className="text-gray-900">{brandName}</span>
+                </div>
+            )}
+
+            {/* Featured badge - only if featured */}
+            {product.featured && (
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-500 font-medium">Status:</span>
+                    <span className="text-yellow-600 font-medium">⭐ Featured</span>
                 </div>
             )}
         </div>
     );
 };
 
-// FIXED: Description section component that renders HTML properly
+// Description section component that renders HTML properly
 const ProductDescription: React.FC<{ description: string }> = ({ description }) => {
     if (!description) {
         return (
-            <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
                 <p className="text-gray-500 italic">No description available for this product.</p>
             </div>
         );
     }
 
     return (
-        <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Product Description</h3>
             <div 
-                className="wysiwyg-content prose prose-sm max-w-none"
+                className="wysiwyg-content prose prose-sm max-w-none text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: description }}
-                style={{
-                    fontFamily: 'inherit',
-                    lineHeight: '1.6',
-                    color: '#374151'
-                }}
             />
         </div>
     );
@@ -209,7 +178,7 @@ const QuantitySelector: React.FC<{
     </div>
 );
 
-// Image gallery component
+// Enhanced Image gallery component with zoom, smooth transitions and arrows
 const ImageGallery: React.FC<{
     images: string[];
     productName: string;
@@ -218,6 +187,8 @@ const ImageGallery: React.FC<{
 }> = ({ images, productName, selectedIndex, onImageSelect }) => {
     const [imageLoading, setImageLoading] = useState(true);
     const [imageError, setImageError] = useState(false);
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
 
     const handleImageLoad = () => setImageLoading(false);
     const handleImageError = () => {
@@ -225,41 +196,115 @@ const ImageGallery: React.FC<{
         setImageError(true);
     };
 
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isZoomed) return;
+        
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        setZoomPosition({ x: Math.min(Math.max(x, 0), 100), y: Math.min(Math.max(y, 0), 100) });
+    };
+
+    const handleImageChange = (index: number) => {
+        setImageLoading(true);
+        setImageError(false);
+        setIsZoomed(false);
+        onImageSelect(index);
+    };
+
+    const goToPrevious = () => {
+        const newIndex = selectedIndex === 0 ? images.length - 1 : selectedIndex - 1;
+        handleImageChange(newIndex);
+    };
+
+    const goToNext = () => {
+        const newIndex = selectedIndex === images.length - 1 ? 0 : selectedIndex + 1;
+        handleImageChange(newIndex);
+    };
+
     return (
         <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative bg-gray-50 rounded-xl overflow-hidden">
+            {/* Main Image with Zoom and Arrows */}
+            <div className="relative bg-gray-50 rounded-xl overflow-hidden group">
                 {imageLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center z-10">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                     </div>
                 )}
-                <img
-                    src={images.length > 0 && !imageError ? images[selectedIndex] : '/placeholder-image.jpg'}
-                    alt={`${productName} - Image ${selectedIndex + 1}`}
-                    className="w-full h-96 lg:h-[500px] object-contain transition-opacity duration-300"
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                />
+                
+                <div 
+                    className="relative cursor-zoom-in h-96 lg:h-[500px] overflow-hidden"
+                    onMouseMove={handleMouseMove}
+                    onMouseEnter={() => setIsZoomed(true)}
+                    onMouseLeave={() => setIsZoomed(false)}
+                >
+                    <img
+                        src={images.length > 0 && !imageError ? images[selectedIndex] : '/placeholder-image.jpg'}
+                        alt={`${productName} - Image ${selectedIndex + 1}`}
+                        className={`w-full h-full object-contain transition-all duration-500 ease-out ${
+                            isZoomed ? 'scale-150' : 'scale-100'
+                        }`}
+                        style={isZoomed ? {
+                            transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
+                        } : {}}
+                        onLoad={handleImageLoad}
+                        onError={handleImageError}
+                    />
+                </div>
+                
+                {/* Navigation Arrows - Only show if more than 1 image */}
+                {images.length > 1 && (
+                    <>
+                        <button
+                            onClick={goToPrevious}
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                            aria-label="Previous image"
+                        >
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={goToNext}
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                            aria-label="Next image"
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </>
+                )}
+                
+                {/* Image Counter */}
+                {images.length > 1 && (
+                    <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                        {selectedIndex + 1} / {images.length}
+                    </div>
+                )}
+                
+                {/* Zoom indicator */}
+                {!imageLoading && !imageError && (
+                    <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        🔍 Hover to zoom
+                    </div>
+                )}
             </div>
 
-            {/* Thumbnail Images */}
+            {/* Thumbnail Images with Smooth Transitions */}
             {images.length > 1 && (
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
                     {images.map((image, index) => (
                         <button
                             key={index}
-                            onClick={() => onImageSelect(index)}
-                            className={`flex-shrink-0 w-20 h-20 rounded-lg border-2 overflow-hidden transition-all duration-200 ${
+                            onClick={() => handleImageChange(index)}
+                            className={`flex-shrink-0 w-20 h-20 rounded-lg border-2 overflow-hidden transition-all duration-300 ease-out transform hover:scale-105 ${
                                 selectedIndex === index 
-                                    ? 'border-blue-500 ring-2 ring-blue-200 shadow-md' 
-                                    : 'border-gray-300 hover:border-gray-400'
+                                    ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg scale-105' 
+                                    : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
                             }`}
                         >
                             <img
                                 src={image}
                                 alt={`${productName} - Thumbnail ${index + 1}`}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-transform duration-200"
                             />
                         </button>
                     ))}
@@ -290,6 +335,47 @@ const SingleProduct: React.FC = () => {
         [data?.product?.photos]
     );
 
+    // Get category info for related products
+    // Fixed categoryInfo logic in ProductDetails.tsx
+const categoryInfo = useMemo(() => {
+    console.log('Debug: Product categories:', data?.product?.categories);
+    
+    if (!data?.product?.categories || data.product.categories.length === 0) return null;
+    
+    const category = data.product.categories[0];
+    console.log('Debug: First category:', category, 'Type:', typeof category);
+    
+    if (typeof category === 'object' && category !== null) {
+        // For populated category objects, use _id
+        const id = category._id;
+        const name = category.name || category.value;
+        
+        console.log('Debug: Category object - ID:', id, 'Name:', name);
+        
+        // Validate that we have a proper ObjectId
+        if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
+            console.warn('Warning: Invalid category ID format:', id);
+            return null;
+        }
+        
+        return { id, name };
+    } else if (typeof category === 'string') {
+        // For string categories, check if it's a valid ObjectId
+        console.log('Debug: Category string:', category);
+        
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+        
+        if (isObjectId) {
+            return { id: category, name: 'Category' }; // Use generic name
+        } else {
+            console.warn('Warning: Category string is not a valid ObjectId:', category);
+            return null;
+        }
+    }
+    
+    console.error('Error: Invalid category format:', category);
+    return null;
+}, [data?.product?.categories]);
     // Memoized handlers
     const handleAddToCart = useCallback((event: React.MouseEvent) => {
         event.preventDefault();
@@ -300,10 +386,13 @@ const SingleProduct: React.FC = () => {
             ? { _id: product.brand._id, name: product.brand.name }
             : product.brand;
 
+        // Use net price for cart
+        const finalPrice = product.netPrice || (product.price - (product.price * product.discount / 100));
+
         const cartItem = {
             productId: product._id,
             name: product.name,
-            price: product.price,
+            price: finalPrice, // Use net price instead of original price
             quantity: 1,
             stock: product.stock,
             photo: productImages.length > 0 ? productImages[0] : '/placeholder-image.jpg',
@@ -352,7 +441,8 @@ const SingleProduct: React.FC = () => {
             <div className="container mx-auto px-4 py-6">
                 <BackButton />
                 
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                {/* Main Product Section */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
                     <div className="flex flex-col lg:flex-row">
                         {/* Product Images */}
                         <div className="flex-1 p-6 lg:p-8">
@@ -374,19 +464,19 @@ const SingleProduct: React.FC = () => {
                                     </h1>
                                 </div>
 
-                                {/* Price */}
-                                <PriceDisplay price={product.price} />
+                                {/* Simplified Price Display */}
+                                <PriceDisplay 
+                                    originalPrice={product.price}
+                                    netPrice={product.netPrice}
+                                    discount={product.discount}
+                                    currencySymbol={product.currencySymbol}
+                                />
 
                                 {/* Stock Status */}
                                 <StockIndicator stock={product.stock} />
 
-                                {/* Product Info */}
-                                <ProductInfoSection 
-                                    product={product}
-                                />
-
-                                {/* Description - Now renders HTML properly */}
-                                <ProductDescription description={product.description} />
+                                {/* Simplified Product Info */}
+                                <ProductInfoSection product={product} />
 
                                 {/* Cart Actions */}
                                 <div className="pt-6 border-t border-gray-200">
@@ -426,6 +516,20 @@ const SingleProduct: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Product Description Section */}
+                <div className="mb-6">
+                    <ProductDescription description={product.description} />
+                </div>
+
+                {/* Related Products Section */}
+                {categoryInfo && (
+                    <RelatedProducts 
+                        currentProductId={product._id}
+                        categoryId={categoryInfo.id}
+                        categoryName={categoryInfo.name}
+                    />
+                )}
             </div>
         </div>
     );

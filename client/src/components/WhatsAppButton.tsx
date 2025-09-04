@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaFacebook, FaWhatsapp, FaFacebookMessenger, FaPhone, FaEnvelope, FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
+import { FaWhatsapp, FaTimes } from 'react-icons/fa';
 
 interface WhatsAppButtonProps {
   phoneNumber?: string;
@@ -9,10 +9,10 @@ interface WhatsAppButtonProps {
 }
 
 const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
-  phoneNumber = "201063166996",
-  message = "مرحبا 👋 انا من موقع 2m Technology أود أن ابحث عن",
+  phoneNumber = "201006683289",
+  message = " Hello",
   className = "",
-  title = "تحدث معنا على واتساب"
+  title = ""
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -29,46 +29,7 @@ const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
       color: 'bg-green-500 hover:bg-green-600',
       textColor: 'text-green-500'
     },
-    {
-      id: 'facebook',
-      icon: FaFacebook,
-      label: 'Facebook',
-      action: () => window.open('https://www.facebook.com/share/19NUCkDMUg/', '_blank'),
-      color: 'bg-blue-600 hover:bg-blue-700',
-      textColor: 'text-blue-600'
-    },
-    {
-      id: 'messenger',
-      icon: FaFacebookMessenger,
-      label: 'Messenger',
-      action: () => window.open('https://m.me/102218348579766?source=qr_link_share&text=مرحبآ%20👋%0Aانا%20اتي%20من%20موقع%202m%20Technology', '_blank'),
-      color: 'bg-blue-500 hover:bg-blue-600',
-      textColor: 'text-blue-500'
-    },
-    {
-      id: 'phone',
-      icon: FaPhone,
-      label: 'Phone',
-      action: () => window.open('tel:+201063166996', '_self'),
-      color: 'bg-gray-600 hover:bg-gray-700',
-      textColor: 'text-gray-600'
-    },
-    {
-      id: 'email',
-      icon: FaEnvelope,
-      label: 'Email',
-      action: () => window.open('mailto:2mtechnology17@gmail.com', '_self'),
-      color: 'bg-purple-600 hover:bg-purple-700',
-      textColor: 'text-purple-600'
-    },
-    {
-      id: 'location',
-      icon: FaMapMarkerAlt,
-      label: 'Location',
-      action: () => window.open('https://maps.app.goo.gl/4EyBrf9mrDg2WgYTA', '_blank'),
-      color: 'bg-red-500 hover:bg-red-600',
-      textColor: 'text-red-500'
-    }
+   
   ];
 
   const toggleMenu = () => {

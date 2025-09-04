@@ -109,10 +109,10 @@ const AdminFeaturedProducts: React.FC = () => {
                                         <div className="space-y-1">
                                             <div className="font-semibold text-gray-900">{product.name}</div>
                                             <div className="text-xs text-gray-500">
-                                                Category: {product.category}
+                                                Categories: {product.categories && product.categories.length > 0 ? product.categories.join(', ') : 'No categories'}
                                             </div>
                                             <div className="text-xs text-gray-500">
-                                                Stock: {product.stock} | Price: EGP {product.price.toLocaleString()}
+                                                Stock: {product.stock} | Price:  {product.price.toLocaleString()}
                                             </div>
                                             {productImages.length > 0 && (
                                                 <div className="text-xs text-blue-600 font-medium">

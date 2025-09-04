@@ -1,3 +1,4 @@
+// admin/src/components/admin/AddProduct/components/ProductForm.tsx
 import React, { FormEvent } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { ProductFormProps } from '../types';
@@ -5,12 +6,7 @@ import BasicInformation from './form-sections/BasicInformation';
 import ProductDetails from './form-sections/ProductDetails';
 import ImageUpload from './form-sections/ImageUpload';
 
-interface UpdatedProductFormProps extends Omit<ProductFormProps, 'onInputChange'> {
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  onDescriptionChange: (value: string) => void;
-}
-
-const ProductForm: React.FC<UpdatedProductFormProps> = ({
+const ProductForm: React.FC<ProductFormProps> = ({
   formData,
   categories,
   subcategories,
@@ -25,6 +21,7 @@ const ProductForm: React.FC<UpdatedProductFormProps> = ({
   onSubcategoryChange,
   onImageChange,
   onDescriptionChange,
+  onStatusChange, // New prop
   onSubmit
 }) => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -54,6 +51,7 @@ const ProductForm: React.FC<UpdatedProductFormProps> = ({
           formData={formData}
           onInputChange={onInputChange}
           onDescriptionChange={onDescriptionChange}
+          onStatusChange={onStatusChange} // Pass the new handler
         />
 
         {/* Images Upload Section */}
@@ -94,4 +92,3 @@ const ProductForm: React.FC<UpdatedProductFormProps> = ({
 };
 
 export default ProductForm;
-

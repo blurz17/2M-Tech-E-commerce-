@@ -54,8 +54,8 @@ const AdminDashboard: React.FC = () => {
         datasets: [
             {
                 data: stats?.userGenderDemographic.map((g) => g.count) || [],
-                backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
-                hoverBackgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
             },
         ],
     }), [stats]);
@@ -76,7 +76,7 @@ const AdminDashboard: React.FC = () => {
         <div className="p-4">
             {/* Widgets section */}
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <Widget heading="Total Revenue" value={`EGP ${stats.totalRevenue}`} description="Overall revenue" color="bg-blue-500" />
+                <Widget heading="Total Revenue" value={` ${stats.totalRevenue}`} description="Overall revenue" color="bg-blue-500" />
                 <Widget heading="Total Orders" value={stats.totalOrders.toString()} description="Total number of orders" color="bg-green-500" />
                 <Widget heading="Active Coupons" value={stats.totalCoupons.toString()} description="Currently active coupons" color="bg-purple-500" />
                 <Widget heading="Total Products" value={stats.totalProducts.toString()} description="Total number of products" color="bg-red-500" />

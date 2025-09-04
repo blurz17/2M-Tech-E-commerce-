@@ -128,7 +128,7 @@ export const cartReducer = createSlice({
 
             const subTotal = state.cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
             state.subTotal = subTotal;
-            // Fixed shipping charge of 50 EGP if cart has items, 0 if empty
+            // Fixed shipping charge of 50  if cart has items, 0 if empty
             state.shippingCharges = state.cartItems.length > 0 ? 50 : 0;
             state.tax = 0;
             state.total = state.subTotal + state.shippingCharges - state.discount;

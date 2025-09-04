@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useGetAllCategoriesQuery } from '../redux/api/category.api';
 
-import SearchBar from './collection_files/SearchBar';
 import CategoryGrid from './collection_files/CategoryGrid'
 import CollectionsStyles from './collection_files/CollectionsStyles';
 
@@ -25,7 +24,7 @@ const Collections: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <section className="w-full py-8 px-4 bg-white">
+        <section className="w-full py-8 px-4 bg-white mt-32">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 animate-pulse">
@@ -55,7 +54,7 @@ const Collections: React.FC = () => {
   if (error) {
     return (
       <>
-        <section className="w-full py-8 px-4 bg-white">
+        <section className="w-full py-8 px-4 bg-white mt-32">
           <div className="max-w-7xl mx-auto text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Our Collections</h2>
             <p className="text-red-600 text-lg">Failed to load categories. Please try again later.</p>
@@ -70,23 +69,8 @@ const Collections: React.FC = () => {
 
   return (
     <>
-      <section className="w-full relative bg-white">
-        {/* Professional Search Bar Section */}
-        <div className="w-full">
-          <SearchBar />
-        </div>
-
-        {/* Banner Section (Optional - you can keep or remove) */}
-        <div className="relative w-full h-32 md:h-48 lg:h-64 overflow-hidden mb-8">
-          <img
-            src="/banner.svg"
-            alt="Collections Banner"
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.85 }}
-          />
-          
+      <section className="w-full relative bg-white mt-32">
        
-        </div>
 
         {/* Category Grid Section */}
         <div className="w-full">

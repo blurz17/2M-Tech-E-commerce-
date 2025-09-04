@@ -8,8 +8,11 @@ export const userApi = createApi({
         ? `${import.meta.env.VITE_SERVER_URL}/api/v1/auth`
         : `/api/v1/auth`,
     credentials: 'include',
-    prepareHeaders: (headers) => {
-        headers.set('Content-Type', 'application/json');
+    prepareHeaders: (headers, { endpoint }) => {
+        // Don't set Content-Type for FormData uploads
+        if (endpoint !== 'updateProfile') {
+            headers.set('Content-Type', 'application/json');
+        }
         return headers;
     },
 }),
@@ -37,6 +40,15 @@ export const userApi = createApi({
         }),
         getMe: builder.query<UserResponse, void>({
             query: () => 'me',
+            providesTags: ['User'],
+        }),
+        updateProfile: builder.mutation<UserResponse, FormData>({
+            query: (formData) => ({
+                url: 'update-profile',
+                method: 'PUT',
+                body: formData,
+            }),
+            invalidatesTags: ['User'],
         }),
         logoutUser: builder.mutation<void, void>({
             query: () => ({
@@ -53,5 +65,6 @@ export const {
     useLoginUserMutation,
     useSignupUserMutation,
     useGetMeQuery,
+    useUpdateProfileMutation,
     useLogoutUserMutation,
 } = userApi;

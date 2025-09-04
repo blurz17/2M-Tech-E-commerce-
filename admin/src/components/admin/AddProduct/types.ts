@@ -1,3 +1,4 @@
+// admin/src/components/admin/AddProduct/types.ts
 export interface ProductFormData {
   name: string;
   categories: string[];
@@ -6,7 +7,8 @@ export interface ProductFormData {
   description: string;
   stock: number;
   price: number;
-  discount: number; // Added discount field
+  discount: number;
+  status: boolean;
 }
 
 export interface Category {
@@ -43,6 +45,8 @@ export interface ProductFormProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onCategoryChange: (selectedCategories: string[]) => void;
   onSubcategoryChange: (selectedSubcategories: string[]) => void;
+  onDescriptionChange: (value: string) => void;
+  onStatusChange: (status: boolean) => void; // Added status handler
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (data: ProductFormData) => Promise<void>;
 }
@@ -57,4 +61,3 @@ export interface PhotoGalleryProps {
 export interface MainPhotoDisplayProps {
   photoPreview: string;
 }
-

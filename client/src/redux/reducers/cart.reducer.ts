@@ -128,9 +128,22 @@ export const cartReducer = createSlice({
 
             const subTotal = state.cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
             state.subTotal = subTotal;
-            // Fixed shipping charge of 50 EGP if cart has items, 0 if empty
-            state.shippingCharges = state.cartItems.length > 0 ? 50 : 0;
+            
+            // Note: Shipping charges will be calculated dynamically by the component
+            // using the shipping tier API. We set a default here for fallback.
+            state.shippingCharges = state.cartItems.length > 0 ? 0 : 0; // Will be updated by API call
             state.tax = 0;
+            state.total = state.subTotal + state.shippingCharges - state.discount;
+            
+            // If the discount is greater than the total price, limit the discount to the total price
+            if (state.total < 0) {
+                state.discount = state.subTotal + state.shippingCharges;
+                state.total = 0;
+            }
+        },
+        // New action to update shipping charges from API
+        updateShippingCharges: (state, action: PayloadAction<number>) => {
+            state.shippingCharges = action.payload;
             state.total = state.subTotal + state.shippingCharges - state.discount;
             
             // If the discount is greater than the total price, limit the discount to the total price
@@ -141,9 +154,12 @@ export const cartReducer = createSlice({
         },
         discountApplied: (state, action: PayloadAction<number>) => {
             state.discount = action.payload;
+            // Recalculate total with new discount
+            state.total = state.subTotal + state.shippingCharges - state.discount;
             // If the discount is greater than the total price, limit the discount to the total price
-            if (state.discount > state.total) {
-                state.discount = state.total;
+            if (state.total < 0) {
+                state.discount = state.subTotal + state.shippingCharges;
+                state.total = 0;
             }
             saveToLocalStorage(state);
         },
@@ -177,7 +193,8 @@ export const {
     removeCartItem, 
     incrementCartItem, 
     decrementCartItem, 
-    calculatePrice, 
+    calculatePrice,
+    updateShippingCharges,
     discountApplied, 
     resetCart, 
     saveShippingInfo 
