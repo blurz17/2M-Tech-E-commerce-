@@ -1,10 +1,9 @@
 import { getViteServerUrl } from "../../utils/url";
-// client/src/redux/api/category.api.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export interface Category {
   _id: string;
-  name: string;a
+  name: string;
   nameAr: string;
   value: string;
   description?: string;
@@ -30,7 +29,7 @@ interface CategoryResponse {
 export const categoryApi = createApi({
   reducerPath: 'categoryApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${import.meta.env.VITE_SERVER_URL}/categories`,
+    baseUrl: `${getViteServerUrl(import.meta.env.VITE_SERVER_URL)}/categories`,
     credentials: 'include',
   }),
   tagTypes: ['Category'],
@@ -52,8 +51,6 @@ export const categoryApi = createApi({
       query: (id) => `/${id}`,
       providesTags: ['Category'],
     }),
-
-  
   }),
 });
 
@@ -61,5 +58,4 @@ export const {
   useGetAllCategoriesQuery,
   useGetAllCategoriesAdminQuery,
   useGetCategoryQuery,
-
 } = categoryApi;

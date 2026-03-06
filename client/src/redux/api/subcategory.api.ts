@@ -1,5 +1,4 @@
 import { getViteServerUrl } from "../../utils/url";
-// admin/src/redux/api/subcategory.api.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export interface Subcategory {
@@ -27,16 +26,11 @@ export interface SingleSubcategoryResponse {
   subcategory: Subcategory;
 }
 
-export interface CreateSubcategoryRequest {
-  formData: FormData;
-}
-
 const subcategoryApi = createApi({
   reducerPath: 'subcategoryApi',
   baseQuery: fetchBaseQuery({
-    // FIXED: Changed from VITE_SERVER to VITE_SERVER_URL to match category.api.ts
-    baseUrl: `${import.meta.env.VITE_SERVER_URL}/subcategory/`,
-    credentials: 'include', // ADDED: Include credentials like in category API
+    baseUrl: `${getViteServerUrl(import.meta.env.VITE_SERVER_URL)}/subcategory/`,
+    credentials: 'include',
   }),
   tagTypes: ['Subcategory'],
   endpoints: (builder) => ({
@@ -57,10 +51,6 @@ const subcategoryApi = createApi({
       query: (id) => id,
       providesTags: ['Subcategory'],
     }),
-
-   
-
-    
   }),
 });
 
@@ -68,7 +58,6 @@ export const {
   useGetAllSubcategoriesQuery,
   useGetSubcategoriesByCategoryQuery,
   useGetSubcategoryQuery,
-
 } = subcategoryApi;
 
 export default subcategoryApi;
