@@ -29,10 +29,13 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response, next:
     try {
         decodedToken = await admin.auth().verifyIdToken(idToken);
     } catch (error: any) {
+        console.error('Firebase Verify Error:', error.message);
         return next(new ApiError(401, 'Invalid or expired token: ' + error.message));
     }
 
     const { uid, email } = decodedToken;
+    console.log(`Login attempt for UID: ${uid}, Email: ${email}`);
+
     let user = await User.findOne({ uid });
 
     // Fallback for migrated users (different Firebase Project UIDs)
@@ -45,13 +48,16 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response, next:
     }
 
     if (!user) {
-        return next(new ApiError(401, 'User not found. Please sign up first.'));
+        console.warn(`User not found in DB for UID: ${uid}`);
+        return next(new ApiError(401, 'User not found in database. Please contact system administrator.'));
     }
 
     if (user.role !== 'admin') {
+        console.warn(`Access denied: User ${email} has role ${user.role}`);
         return next(new ApiError(403, 'Unauthorized: Admin access only'));
     }
 
+    console.log(`Admin ${email} logged in successfully`);
     res.cookie('token', idToken, getCookieOptions());
 
     return res.status(200).json({
