@@ -37,14 +37,14 @@ export const settingsApi = createApi({
             ? `${import.meta.env.VITE_SERVER_URL}/settings`
             : `/settings`,
         credentials: 'include',
-                prepareHeaders: async (headers, { endpoint }) => {
+        prepareHeaders: async (headers) => {
             const token = localStorage.getItem('admin_token');
             const authPrefix = 'Bearer ';
 
             try {
                 const { auth } = await import('../../firebaseConfig');
                 const user = auth.currentUser;
-                
+
                 if (user) {
                     const freshToken = await user.getIdToken();
                     headers.set('Authorization', authPrefix + freshToken);
@@ -56,7 +56,7 @@ export const settingsApi = createApi({
                     headers.set('Authorization', authPrefix + token);
                 }
             }
-            
+
             return headers;
         },
     }),
