@@ -3,19 +3,22 @@
  * If missing and not localhost, prepends https://.
  */
 export const getViteServerUrl = (url: string | undefined): string => {
-    if (!url) return '';
+    if (!url) {
+        console.warn('VITE_SERVER_URL is undefined');
+        return '';
+    }
 
     const trimmedUrl = url.trim();
+    let result = '';
 
-    // If it's already an absolute URL, return as is
     if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-        return trimmedUrl;
+        result = trimmedUrl;
+    } else if (trimmedUrl.includes('localhost') || trimmedUrl.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)) {
+        result = `http://${trimmedUrl}`;
+    } else {
+        result = `https://${trimmedUrl}`;
     }
 
-    // If it's localhost or an IP, use http, otherwise default to https
-    if (trimmedUrl.includes('localhost') || trimmedUrl.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)) {
-        return `http://${trimmedUrl}`;
-    }
-
-    return `https://${trimmedUrl}`;
+    // Ensure it doesn't end with a slash to avoid double slashes when joining paths
+    return result.endsWith('/') ? result.slice(0, -1) : result;
 };

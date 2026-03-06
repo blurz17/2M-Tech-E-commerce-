@@ -30,7 +30,7 @@ interface CategoryResponse {
 export const categoryApi = createApi({
   reducerPath: 'categoryApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${import.meta.env.VITE_SERVER_URL}/categories`,
+    baseUrl: `${getViteServerUrl(import.meta.env.VITE_SERVER_URL)}/categories`,
     credentials: 'include',
             prepareHeaders: async (headers) => {
             const token = localStorage.getItem('admin_token');

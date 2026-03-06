@@ -34,7 +34,7 @@ export interface CreateSubcategoryRequest {
 const subcategoryApi = createApi({
   reducerPath: 'subcategoryApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${import.meta.env.VITE_SERVER_URL}/subcategories/`,
+    baseUrl: `${getViteServerUrl(import.meta.env.VITE_SERVER_URL)}/subcategories/`,
     credentials: 'include',
             prepareHeaders: async (headers) => {
             const token = localStorage.getItem('admin_token');
