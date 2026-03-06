@@ -32,7 +32,6 @@ const Cart: React.FC = () => {
 
   const {
     data: shippingData,
-    isLoading: isCalculatingShipping,
     error: shippingError
   } = useCalculateShippingCostQuery(subTotal, {
     skip: subTotal === 0
