@@ -11,7 +11,6 @@ export default defineConfig(({ command, mode }) => {
     }
     return env.VITE_SERVER_URL || "https://2-m.vercel.app"
   }
-
   return {
     plugins: [react()],
     define: {
